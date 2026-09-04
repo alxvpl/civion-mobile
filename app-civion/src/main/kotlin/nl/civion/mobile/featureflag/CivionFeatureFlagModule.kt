@@ -1,0 +1,13 @@
+package nl.civion.mobile.featureflag
+
+import net.thunderbird.core.featureflag.inject.featureFlagModule
+import net.thunderbird.core.featureflag.model.AppVariantOverrides
+import net.thunderbird.core.featureflag.model.EmptyAppVariantOverride
+import net.thunderbird.core.featureflag.serialization.FlagRegistryOverrideSerializer
+import org.koin.dsl.module
+
+val civionFeatureFlagModule = module {
+    includes(featureFlagModule)
+    factory<AppVariantOverrides.Factory> { CivionOverrides.Factory }
+    factory { FlagRegistryOverrideSerializer(k9Factory = get(), thunderbirdFactory = EmptyAppVariantOverride) }
+}

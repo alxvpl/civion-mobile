@@ -70,6 +70,7 @@ if (useLocalComponents || useLocalBolt) {
 }
 
 include(
+    ":app-civion",
     ":app-k9mail",
     ":app-thunderbird",
 )

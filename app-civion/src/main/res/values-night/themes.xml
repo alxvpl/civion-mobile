@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.Civion.DayNight" parent="Theme.Civion.Dark" />
+    <style name="Theme.Civion.DayNight.Dialog" parent="Theme.Civion.Dark.Dialog" />
+    <style name="Theme.Civion.DayNight.Dialog.Translucent" parent="Theme.Civion.Dark.Dialog.Translucent" />
+
+</resources>
