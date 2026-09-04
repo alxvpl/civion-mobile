@@ -21,6 +21,26 @@ val testCoverageEnabled = providers
  *   civion.release.keyAlias=civion
  *   civion.release.keyPassword=...
  */
+/**
+ * CIVION-owned Google OAuth client ids, per application id.
+ *
+ * A Google OAuth client of type Android is bound to one package name and one signing certificate,
+ * so the debug application id (`nl.civion.mobile.debug`, debug keystore) and the release one
+ * (`nl.civion.mobile`, CIVION release key) need separate registrations.
+ *
+ * Provide, e.g. in `~/.gradle/gradle.properties` — never in the repository:
+ *   civion.google.oauth.clientId.debug=<id>.apps.googleusercontent.com
+ *   civion.google.oauth.clientId.release=<id>.apps.googleusercontent.com
+ *
+ * Absent, the app simply offers no OAuth provider, exactly as before.
+ */
+val googleOAuthClientIdDebug = providers
+    .gradleProperty("civion.google.oauth.clientId.debug")
+    .getOrElse("")
+val googleOAuthClientIdRelease = providers
+    .gradleProperty("civion.google.oauth.clientId.release")
+    .getOrElse("")
+
 val civionStoreFile = providers.gradleProperty("civion.release.storeFile")
 val civionStorePassword = providers.gradleProperty("civion.release.storePassword")
 val civionKeyAlias = providers.gradleProperty("civion.release.keyAlias")
@@ -72,6 +92,12 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             }
 
+            buildConfigField(
+                "String",
+                "GOOGLE_OAUTH_CLIENT_ID",
+                "\"$googleOAuthClientIdRelease\"",
+            )
+
             isMinifyEnabled = false
             isShrinkResources = false
 
@@ -83,6 +109,12 @@ android {
 
         debug {
             applicationIdSuffix = ".debug"
+
+            buildConfigField(
+                "String",
+                "GOOGLE_OAUTH_CLIENT_ID",
+                "\"$googleOAuthClientIdDebug\"",
+            )
 
             enableUnitTestCoverage = testCoverageEnabled
             enableAndroidTestCoverage = testCoverageEnabled
