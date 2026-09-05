@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="app_logo_main">#0f5c6b</color>
-    <color name="app_logo_highlight_light">#1a7d90</color>
-    <color name="app_logo_highlight_dark">#0a4351</color>
+    <!-- CIVION identity. These replace the teal placeholder values of the pre-icon period. -->
+    <color name="app_logo_main">#9E1119</color>
+    <color name="app_logo_highlight_light">#C62828</color>
+    <color name="app_logo_highlight_dark">#67000A</color>
 
-    <color name="launcher_icon_background">#d7e8ec</color>
+    <color name="launcher_icon_background">#FA352F</color>
 </resources>
