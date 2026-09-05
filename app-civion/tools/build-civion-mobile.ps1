@@ -1,54 +1,220 @@
+<#
+    CIVION Mobile — the single build procedure.
+
+    One script, two callers: run it by hand on the owner's machine, or let the
+    self-hosted GitHub Actions runner call it. There is deliberately no second
+    build path, so a CI artifact and a hand-built artifact are produced the same
+    way and carry the same evidence.
+
+    What it guarantees about every APK it produces:
+      - the commit it was built from is recorded in the file name and in
+        BUILD-INFO.txt, and an uncommitted working tree is refused by default;
+      - the engine footprint required by civion-android-mail-edge-decision-r002
+        section 3.2 is re-measured, and the build fails if an engine file changed;
+      - a SHA-256 is written next to the APK and appended to an append-only ledger.
+
+    Examples:
+      .\build-civion-mobile.ps1
+      .\build-civion-mobile.ps1 -Variant release -Version 0.2.0-alpha
+      .\build-civion-mobile.ps1 -AllowDirty        # marks the artifact +dirty
+#>
+[CmdletBinding()]
+param(
+    [ValidateSet("debug", "release")]
+    [string] $Variant = "debug",
+
+    [string] $Version = "0.1.0-alpha",
+
+    # Where the APK, its hash, BUILD-INFO.txt and the ledger are written.
+    [string] $OutDir,
+
+    [string] $JavaHome,
+    [string] $AndroidSdk,
+
+    # Build anyway when the working tree has uncommitted changes. The artifact is
+    # then named +dirty and marked as such in BUILD-INFO.txt.
+    [switch] $AllowDirty,
+
+    # Skip :app-civion:clean. Faster, and correspondingly less trustworthy.
+    [switch] $NoClean
+)
+
 $ErrorActionPreference = "Stop"
 
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
-$javaHome = "F:\Android\jdk-21"
-$androidSdk = "F:\Android\Sdk"
-$sourceApk = Join-Path $repositoryRoot "app-civion\build\outputs\apk\debug\app-civion-debug.apk"
-$targetApk = "F:\CIVION-Mobile-0.1.0-alpha.apk"
-$logPath = "F:\CIVION-Mobile-build.log"
+$isCi           = ($env:GITHUB_ACTIONS -eq "true")
+$upstreamBase   = "7fb13f7c226bcdede9b825d2caccfd60f4b0a45a"
 
-if (-not (Test-Path (Join-Path $javaHome "bin\java.exe"))) {
-    throw "JDK 21 was not found at $javaHome"
+function Write-Section([string] $Text) {
+    Write-Output ""
+    Write-Output "=== $Text"
 }
 
-if (-not (Test-Path $androidSdk)) {
-    throw "Android SDK was not found at $androidSdk"
+# ---------------------------------------------------------------- toolchain ---
+
+if (-not $JavaHome) {
+    if ($env:JAVA_HOME) { $JavaHome = $env:JAVA_HOME } else { $JavaHome = "F:\Android\jdk-21" }
+}
+if (-not $AndroidSdk) {
+    if ($env:ANDROID_HOME) { $AndroidSdk = $env:ANDROID_HOME }
+    elseif ($env:ANDROID_SDK_ROOT) { $AndroidSdk = $env:ANDROID_SDK_ROOT }
+    else { $AndroidSdk = "F:\Android\Sdk" }
 }
 
-$env:JAVA_HOME = $javaHome
-$env:ANDROID_HOME = $androidSdk
-$env:ANDROID_SDK_ROOT = $androidSdk
-$env:Path = "$javaHome\bin;$env:Path"
+if (-not (Test-Path (Join-Path $JavaHome "bin\java.exe"))) {
+    throw "JDK 21 was not found at $JavaHome. Pass -JavaHome or set JAVA_HOME."
+}
+if (-not (Test-Path $AndroidSdk)) {
+    throw "Android SDK was not found at $AndroidSdk. Pass -AndroidSdk or set ANDROID_HOME."
+}
+
+$env:JAVA_HOME        = $JavaHome
+$env:ANDROID_HOME     = $AndroidSdk
+$env:ANDROID_SDK_ROOT = $AndroidSdk
+$env:Path             = "$JavaHome\bin;$env:Path"
+
+if (-not $OutDir) {
+    if ($isCi) { $OutDir = Join-Path $repositoryRoot "out" } else { $OutDir = "F:\civion-builds" }
+}
+New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+
+# -------------------------------------------------------- commit identity ---
 
 Push-Location $repositoryRoot
 try {
-    Write-Output "Building CIVION Mobile. This can take several minutes..."
+    $commit = (& git rev-parse HEAD).Trim()
+    $short  = $commit.Substring(0, 7)
 
-    $gradleCommand = '"{0}" :app-civion:clean :app-civion:assembleDebug --no-daemon --no-watch-fs > "{1}" 2>&1' -f (Join-Path $repositoryRoot "gradlew.bat"), $logPath
+    $branch = (& git rev-parse --abbrev-ref HEAD).Trim()
+    if ($branch -eq "HEAD" -and $env:GITHUB_REF_NAME) { $branch = $env:GITHUB_REF_NAME }
 
+    $pending = & git status --porcelain --untracked-files=no
+    $isDirty = -not [string]::IsNullOrWhiteSpace(($pending -join ""))
+
+    Write-Section "Commit identity"
+    Write-Output "commit : $commit"
+    Write-Output "branch : $branch"
+    Write-Output "tree   : $(if ($isDirty) { 'DIRTY' } else { 'clean' })"
+
+    if ($isDirty -and -not $AllowDirty) {
+        Write-Output ""
+        $pending | ForEach-Object { Write-Output "  $_" }
+        throw "The working tree has uncommitted changes. Commit them, or pass -AllowDirty to build an artifact marked +dirty."
+    }
+
+    # ------------------------------------------------------ engine footprint ---
+
+    Write-Section "Patch footprint against upstream base $($upstreamBase.Substring(0,7))"
+
+    $baseKnown = $true
+    & git cat-file -e "$upstreamBase^{commit}" 2>$null
+    if ($LASTEXITCODE -ne 0) { $baseKnown = $false }
+
+    $engineChanged = @()
+    if (-not $baseKnown) {
+        Write-Output "Upstream base is not present in this checkout; footprint not measured."
+        Write-Output "Fetch the full history to enforce it (actions/checkout with fetch-depth: 0)."
+    }
+    else {
+        $changed   = @(& git diff --name-only "$upstreamBase..HEAD" | Where-Object { $_ })
+        $engineRx  = '^(legacy|mail|backend|core|feature)/'
+        $civionRx  = '^feature/civion/'
+        $engineChanged = @($changed | Where-Object { $_ -match $engineRx -and $_ -notmatch $civionRx })
+        $appCommon     = @($changed | Where-Object { $_ -match '^app-common/' })
+        $civionFiles   = @($changed | Where-Object { $_ -match '^app-civion/' -or $_ -match $civionRx })
+
+        Write-Output ("changed files    : {0}" -f $changed.Count)
+        Write-Output ("CIVION files     : {0}" -f $civionFiles.Count)
+        Write-Output ("app-common files : {0}" -f $appCommon.Count)
+        Write-Output ("engine files     : {0}   (decision r002 section 3.2 requires 0)" -f $engineChanged.Count)
+
+        if ($engineChanged.Count -ne 0) {
+            Write-Output ""
+            $engineChanged | ForEach-Object { Write-Output "  $_" }
+            throw "Engine files changed. The accepted architecture requires 0; the decision returns for revision rather than being patched around."
+        }
+    }
+
+    # ------------------------------------------------------------------ build ---
+
+    $suffix    = $short
+    if ($isDirty) { $suffix = "$short+dirty" }
+    $logPath   = Join-Path $OutDir ("gradle-{0}-{1}.log" -f $Variant, $suffix)
+    $assemble  = "assemble" + $Variant.Substring(0,1).ToUpper() + $Variant.Substring(1)
+    $tasks     = ":app-civion:$assemble"
+    if (-not $NoClean) { $tasks = ":app-civion:clean $tasks" }
+
+    Write-Section "Gradle"
+    Write-Output "tasks : $tasks"
+    Write-Output "log   : $logPath"
+    Write-Output "This can take several minutes..."
+
+    $gradleCommand = '"{0}" {1} --no-daemon --no-watch-fs > "{2}" 2>&1' -f (Join-Path $repositoryRoot "gradlew.bat"), $tasks, $logPath
     & cmd.exe /d /c $gradleCommand
     $gradleExitCode = $LASTEXITCODE
 
     if ($gradleExitCode -ne 0) {
-        Write-Output "BUILD FAILED"
-        Write-Output "Log: $logPath"
-        Get-Content $logPath -Tail 80
+        Write-Output "BUILD FAILED (gradle exit $gradleExitCode)"
+        if (Test-Path $logPath) { Get-Content $logPath -Tail 80 }
         exit $gradleExitCode
     }
 
-    if (-not (Test-Path $sourceApk)) {
-        throw "Gradle succeeded but the APK was not found at $sourceApk"
-    }
+    # ---------------------------------------------------------------- collect ---
 
-    Copy-Item -Force $sourceApk $targetApk
-    $apk = Get-Item $targetApk
+    $apkDir = Join-Path $repositoryRoot "app-civion\build\outputs\apk\$Variant"
+    $source = Get-ChildItem -Path $apkDir -Filter *.apk -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $source) { throw "Gradle succeeded but no APK was found under $apkDir" }
+
+    $targetName = "CIVION-Mobile-{0}-{1}-{2}.apk" -f $Version, $Variant, $suffix
+    $targetApk  = Join-Path $OutDir $targetName
+    Copy-Item -Force $source.FullName $targetApk
+
+    $apk    = Get-Item $targetApk
     $sha256 = (Get-FileHash -Algorithm SHA256 $targetApk).Hash
+    $built  = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss zzz")
 
-    Write-Output "BUILD SUCCESS"
-    Write-Output "APK: $targetApk"
-    Write-Output "Size: $($apk.Length) bytes"
-    Write-Output "Timestamp: $($apk.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss zzz'))"
+    $infoPath = Join-Path $OutDir ("BUILD-INFO-{0}.txt" -f $suffix)
+    @(
+        "artifact : $targetName"
+        "variant  : $Variant"
+        "version  : $Version"
+        "commit   : $commit"
+        "branch   : $branch"
+        "tree     : $(if ($isDirty) { 'DIRTY — not reproducible from the repository' } else { 'clean' })"
+        "engine   : $($engineChanged.Count) engine files changed vs $upstreamBase"
+        "built    : $built"
+        "builder  : $(if ($isCi) { 'github actions, self-hosted runner' } else { 'manual' })"
+        "size     : $($apk.Length) bytes"
+        "sha256   : $sha256"
+    ) | Set-Content -Path $infoPath -Encoding UTF8
+
+    $ledger = Join-Path $OutDir "build-history.csv"
+    if (-not (Test-Path $ledger)) {
+        "timestamp,commit,branch,variant,version,dirty,builder,sha256,artifact" | Set-Content -Path $ledger -Encoding UTF8
+    }
+    ("{0},{1},{2},{3},{4},{5},{6},{7},{8}" -f $built, $commit, $branch, $Variant, $Version, $isDirty, $(if ($isCi) { "ci" } else { "manual" }), $sha256, $targetName) |
+        Add-Content -Path $ledger -Encoding UTF8
+
+    Write-Section "BUILD SUCCESS"
+    Write-Output "APK    : $targetApk"
+    Write-Output "Size   : $($apk.Length) bytes"
+    Write-Output "Commit : $commit"
     Write-Output "SHA-256: $sha256"
+    Write-Output "Info   : $infoPath"
+
+    if ($isCi -and $env:GITHUB_STEP_SUMMARY) {
+        @(
+            "### CIVION Mobile $Version ($Variant)"
+            ""
+            "| | |"
+            "|---|---|"
+            "| commit | ``$commit`` |"
+            "| branch | ``$branch`` |"
+            "| engine files changed | $($engineChanged.Count) |"
+            "| size | $($apk.Length) bytes |"
+            "| sha-256 | ``$sha256`` |"
+        ) | Add-Content -Path $env:GITHUB_STEP_SUMMARY -Encoding UTF8
+    }
 }
 finally {
     Pop-Location
