@@ -24,9 +24,12 @@ on:
         type: choice
         options: [debug, release]
 
+# One runner, one build at a time. The group deliberately does not include the
+# ref: two branches carrying the same commit would otherwise build concurrently
+# and collide in the runner's single workspace.
 concurrency:
-  group: civion-mobile-build-${{ github.ref }}
-  cancel-in-progress: true
+  group: civion-mobile-build
+  cancel-in-progress: false
 
 permissions:
   contents: read

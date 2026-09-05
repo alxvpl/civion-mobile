@@ -104,6 +104,16 @@ try {
 
     # ------------------------------------------------------ engine footprint ---
 
+    # Is this commit published? A clean tree is not the same as a published one:
+    # an artifact built from a local-only commit cannot be reproduced by anyone else.
+    $published = "unknown"
+    $remoteRef = & git rev-parse --verify --quiet "refs/remotes/origin/$branch"
+    if ($LASTEXITCODE -eq 0 -and $remoteRef) {
+        & git merge-base --is-ancestor $commit $remoteRef.Trim() 2>$null
+        if ($LASTEXITCODE -eq 0) { $published = "yes" } else { $published = "no" }
+    }
+    Write-Output "origin : $(if ($published -eq 'yes') { 'commit is published' } elseif ($published -eq 'no') { 'NOT PUBLISHED — this commit exists only on this machine' } else { 'unknown (no origin ref in this checkout)' })"
+
     Write-Section "Patch footprint against upstream base $($upstreamBase.Substring(0,7))"
 
     $baseKnown = $true
@@ -182,6 +192,7 @@ try {
         "branch   : $branch"
         "tree     : $(if ($isDirty) { 'DIRTY — not reproducible from the repository' } else { 'clean' })"
         "engine   : $($engineChanged.Count) engine files changed vs $upstreamBase"
+        "published: $published"
         "built    : $built"
         "builder  : $(if ($isCi) { 'github actions, self-hosted runner' } else { 'manual' })"
         "size     : $($apk.Length) bytes"
