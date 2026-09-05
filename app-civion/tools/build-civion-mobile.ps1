@@ -171,6 +171,33 @@ try {
     Write-Output "log   : $logPath"
     Write-Output "This can take several minutes..."
 
+    # ---------------------------------------------------------- OAuth identity ---
+    #
+    # The accepted debug OAuth identity of CIVION Mobile. A Google Android client is
+    # bound to one package name and one signing certificate; a build that satisfies
+    # neither cannot sign in, and silently falls back to password authentication,
+    # which Gmail refuses. Both are therefore verified, not assumed.
+    #
+    #   package : nl.civion.mobile.debug
+    #   client  : "CIVION Mobile Debug"
+    #   SHA-1   : A6:7F:62:5A:FD:58:10:6A:1E:0C:0D:5A:CE:63:4C:59:F2:56:8A:1A
+    #
+    $expectedSigningSha1 = "A67F625AFD58106A1E0C0D5ACE634C59F2568A1A"
+
+    $oauthClientId = $env:CIVION_OAUTH_CLIENT_ID_DEBUG
+    if (-not $oauthClientId) {
+        $gradleProperties = Join-Path $env:USERPROFILE ".gradle\gradle.properties"
+        if (Test-Path $gradleProperties) {
+            $line = Select-String -Path $gradleProperties -Pattern "^civion\.google\.oauth\.clientId\.debug\s*=\s*(.+)$" |
+                Select-Object -First 1
+            if ($line) { $oauthClientId = $line.Matches[0].Groups[1].Value.Trim() }
+        }
+    }
+
+    if ($Variant -eq "debug" -and -not $oauthClientId) {
+        throw "No Google OAuth client id for the debug build. Set CIVION_OAUTH_CLIENT_ID_DEBUG, or civion.google.oauth.clientId.debug in ~/.gradle/gradle.properties. Without it the application offers no OAuth provider and Gmail falls back to password authentication."
+    }
+
     # Values a machine may need to supply from outside the repository: the CIVION Google
     # OAuth client id, and the shared debug keystore that the registered client is bound to.
     $extraProperties = @()
@@ -211,6 +238,41 @@ try {
     $sha256 = (Get-FileHash -Algorithm SHA256 $targetApk).Hash
     $built  = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss zzz")
 
+    # ------------------------------------------------- verify OAuth identity ---
+
+    if ($Variant -eq "debug") {
+        $certOutput = & keytool -printcert -jarfile $targetApk 2>&1 | Out-String
+        $certMatch = [regex]::Match($certOutput, "SHA1:\s*([0-9A-Fa-f:]+)")
+        if (-not $certMatch.Success) {
+            throw "Could not read the signing certificate of $targetName; the OAuth identity cannot be verified."
+        }
+        $actualSha1 = $certMatch.Groups[1].Value.Replace(":", "").ToUpper()
+        if ($actualSha1 -ne $expectedSigningSha1) {
+            throw ("Signed with the wrong certificate. Expected {0}, got {1}. Google binds the OAuth client to this certificate; a build signed by any other key cannot sign in. Point civion.debug.storeFile at the keystore holding the expected key." -f $expectedSigningSha1, $actualSha1)
+        }
+
+        $apkBytes = [System.IO.File]::ReadAllBytes($targetApk)
+        $needle = [System.Text.Encoding]::ASCII.GetBytes($oauthClientId)
+        $found = $false
+        $limit = $apkBytes.Length - $needle.Length
+        for ($i = 0; $i -le $limit -and -not $found; $i++) {
+            if ($apkBytes[$i] -eq $needle[0]) {
+                $match = $true
+                for ($j = 1; $j -lt $needle.Length; $j++) {
+                    if ($apkBytes[$i + $j] -ne $needle[$j]) { $match = $false; break }
+                }
+                if ($match) { $found = $true }
+            }
+        }
+        $apkBytes = $null
+        if (-not $found) {
+            throw "The OAuth client id is not present in $targetName. The build would offer no OAuth provider and Gmail would fall back to password authentication."
+        }
+
+        Write-Output ""
+        Write-Output "OAuth identity verified: nl.civion.mobile.debug / $expectedSigningSha1"
+    }
+
     $infoPath = Join-Path $OutDir ("BUILD-INFO-{0}.txt" -f $suffix)
     @(
         "artifact : $targetName"
@@ -225,6 +287,7 @@ try {
         "builder  : $(if ($isCi) { 'github actions, self-hosted runner' } else { 'manual' })"
         "size     : $($apk.Length) bytes"
         "sha256   : $sha256"
+        "oauth    : $(if ($Variant -eq 'debug') { 'verified — client id present, signed by the registered certificate' } else { 'n/a' })"
     ) | Set-Content -Path $infoPath -Encoding UTF8
 
     $ledger = Join-Path $OutDir "build-history.csv"
