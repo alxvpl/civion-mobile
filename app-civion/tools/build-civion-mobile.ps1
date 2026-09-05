@@ -256,11 +256,18 @@ try {
                 throw ("Signed with the wrong certificate. Expected {0}, got {1}. Google binds the OAuth client to this certificate; a build signed by any other key cannot sign in. Point civion.debug.storeFile at the keystore holding the expected key." -f $expectedSigningSha1, $actualSha1)
             }
 
-            $apkText = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($targetApk))
-            $found = $apkText.Contains($oauthClientId)
-            $apkText = $null
+            # The dex entries inside the APK are compressed, so the id cannot be found by
+            # scanning its bytes. BuildConfig is what the compiler actually used.
+            $buildConfig = Get-ChildItem -Path (Join-Path $repositoryRoot "app-civion\build\generated\source\buildConfig") `
+                -Filter "BuildConfig.java" -Recurse -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.FullName -match "\\$Variant\\" } |
+                Select-Object -First 1
+            if (-not $buildConfig) {
+                throw "Generated BuildConfig for the $Variant variant was not found; the OAuth client id cannot be verified."
+            }
+            $found = (Select-String -Path $buildConfig.FullName -Pattern ([regex]::Escape($oauthClientId)) -Quiet) -eq $true
             if (-not $found) {
-                throw "The OAuth client id is not present in $targetName. The build would offer no OAuth provider and Gmail would fall back to password authentication."
+                throw "The OAuth client id is not compiled into the $Variant build. The application would offer no OAuth provider and Gmail would fall back to password authentication."
             }
 
             Write-Output ""
