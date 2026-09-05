@@ -8,11 +8,11 @@ name: CIVION Mobile — build
 # Runs on a self-hosted Windows runner: the machine already carries JDK 21 and the
 # Android SDK, and self-hosted runners consume no GitHub Actions minutes.
 
+# Only `push` builds. In a single-owner repository a pull request from a branch
+# of the same repository would build the identical commit a second time on the
+# one available runner.
 on:
   push:
-    branches:
-      - 'civion/**'
-  pull_request:
     branches:
       - 'civion/**'
   workflow_dispatch:
