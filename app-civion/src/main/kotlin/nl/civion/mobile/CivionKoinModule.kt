@@ -6,7 +6,9 @@ import com.fsck.k9.DefaultAppConfig
 import com.fsck.k9.activity.MessageCompose
 import net.thunderbird.app.common.appCommonModule
 import net.thunderbird.core.common.oauth.OAuthConfigurationFactory
+import net.thunderbird.core.common.oauth.OAuthConfigurationProvider
 import nl.civion.mobile.auth.CivionOAuthConfigurationFactory
+import nl.civion.mobile.auth.CivionOAuthConfigurationProvider
 import nl.civion.mobile.dev.developmentModuleAdditions
 import nl.civion.mobile.feature.featureModule
 import nl.civion.mobile.featureflag.civionFeatureFlagModule
@@ -16,6 +18,16 @@ import nl.civion.mobile.widget.provider.UnreadWidgetProvider
 import nl.civion.mobile.widget.widgetModule
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import org.koin.dsl.override
+
+private val civionOAuthProviderOverrideModule = module {
+    single<OAuthConfigurationProvider> {
+        CivionOAuthConfigurationProvider(
+            factory = get(),
+            logger = get(),
+        )
+    }.override()
+}
 
 val appModule = module {
     includes(civionFeatureFlagModule)
@@ -31,6 +43,10 @@ val appModule = module {
     single<OAuthConfigurationFactory> { CivionOAuthConfigurationFactory() }
 
     developmentModuleAdditions()
+
+    // Must be included last so the upstream OAuthConfigurationProvider has
+    // already been registered before this targeted CIVION override is loaded.
+    includes(civionOAuthProviderOverrideModule)
 }
 
 val appConfig = DefaultAppConfig(

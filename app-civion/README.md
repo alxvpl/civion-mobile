@@ -40,3 +40,24 @@ Redirect URI: `<applicationId>:/oauth2redirect`. No manifest entry is needed her
 already declares AppAuth's `RedirectUriReceiverActivity` with `android:scheme="${applicationId}"`.
 
 Client ids are not committed. Put them in `~/.gradle/gradle.properties`.
+
+For the current debug OAuth client in Google Auth Platform:
+
+- application type: Android
+- package: `nl.civion.mobile.debug`
+- audience: External / Testing
+- Custom URI scheme: enabled
+- every Gmail account used during testing must be listed under Audience -> Test users
+
+The OAuth client ID remains local Gradle configuration and must not be committed. Google Cloud
+audience and custom-URI settings are service-side configuration and don't require a new APK.
+
+## Windows build helper
+
+On the CIVION development workstation, run:
+
+    powershell -ExecutionPolicy Bypass -File app-civion\tools\build-civion-mobile.ps1
+
+The helper disables Gradle file-system watching (required on the current `F:` workspace), writes
+the full build output to `F:\CIVION-Mobile-build.log`, and copies the resulting debug APK to
+`F:\CIVION-Mobile-0.1.0-alpha.apk` together with a printed size, timestamp, and SHA-256.
