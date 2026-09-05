@@ -63,9 +63,13 @@ jobs:
       - name: Stage this commit's artifact for upload
         shell: powershell
         run: |
-          $short = "${{ github.sha }}".Substring(0,7)
-          New-Item -ItemType Directory -Force "${{ github.workspace }}\out" | Out-Null
-          Copy-Item "F:\civion-builds\*$short*" "${{ github.workspace }}\out\" -Force
+          $short = "${{ github.sha }}".Substring(0, 7)
+          $dest = Join-Path "${{ github.workspace }}" "out"
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          $files = @(Get-ChildItem -Path "F:\civion-builds" -Filter "*$short*" -File -ErrorAction SilentlyContinue)
+          if ($files.Count -eq 0) { Write-Error "No build output for $short in F:\civion-builds"; exit 1 }
+          $files | Copy-Item -Destination $dest -Force
+          Get-ChildItem $dest | Select-Object Name, Length | Format-Table | Out-String | Write-Output
 
       - name: Upload APK, hash and build info
         if: success()
