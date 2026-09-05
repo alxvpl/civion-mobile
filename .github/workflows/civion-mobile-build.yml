@@ -46,14 +46,17 @@ jobs:
           fetch-depth: 0
 
       - name: Build
-        shell: powershell
+        # The runner service executes under NETWORK SERVICE. Use a process-scoped
+        # bypass so the trusted repository script can run regardless of that
+        # service account's PowerShell execution policy; machine policy is unchanged.
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           .\app-civion\tools\build-civion-mobile.ps1 `
             -Variant "${{ inputs.variant || 'debug' }}" `
             -OutDir "${{ github.workspace }}\out"
 
       - name: Upload APK, hash and build info
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: civion-mobile-${{ github.sha }}
