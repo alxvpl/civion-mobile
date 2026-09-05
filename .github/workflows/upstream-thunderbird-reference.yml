@@ -1,0 +1,44 @@
+name: Upstream Thunderbird — reference build
+
+# Builds upstream app-thunderbird from the same commit, on the same machine, with
+# the same toolchain. Its application id differs (net.thunderbird.android.debug),
+# so it installs alongside CIVION Mobile and the same account can be compared in
+# both. Manual only.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: civion-mobile-build
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: app-thunderbird fossDebug
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        shell: powershell
+        run: |
+          $env:JAVA_HOME = "F:\Android\jdk-21"
+          $env:ANDROID_HOME = "F:\Android\Sdk"
+          $env:ANDROID_SDK_ROOT = "F:\Android\Sdk"
+          $env:Path = "$env:JAVA_HOME\bin;$env:Path"
+          & cmd.exe /d /c '.\gradlew.bat :app-thunderbird:assembleFossDebug --no-daemon --no-watch-fs > "F:\civion-builds\gradle-thunderbird-reference.log" 2>&1'
+          if ($LASTEXITCODE -ne 0) {
+            Get-Content "F:\civion-builds\gradle-thunderbird-reference.log" -Tail 60
+            exit $LASTEXITCODE
+          }
+          $apk = Get-ChildItem -Path "app-thunderbird\build\outputs\apk" -Filter *.apk -Recurse -File | Select-Object -First 1
+          if (-not $apk) { Write-Error "No APK produced"; exit 1 }
+          Copy-Item $apk.FullName "F:\civion-builds\Thunderbird-upstream-reference.apk" -Force
+          Write-Output "APK: F:\civion-builds\Thunderbird-upstream-reference.apk"
+          (Get-FileHash -Algorithm SHA256 "F:\civion-builds\Thunderbird-upstream-reference.apk").Hash
