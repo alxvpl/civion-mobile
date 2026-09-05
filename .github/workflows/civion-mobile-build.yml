@@ -60,24 +60,14 @@ jobs:
 
       # Every build, CI or manual, lands in F:\civion-builds on this machine. The
       # workflow artifact is a copy for anyone without access to the machine.
-      - name: Stage this commit's artifact for upload
-        shell: powershell
-        run: |
-          $short = "${{ github.sha }}".Substring(0, 7)
-          $dest = Join-Path "${{ github.workspace }}" "out"
-          New-Item -ItemType Directory -Force -Path $dest | Out-Null
-          $files = @(Get-ChildItem -Path "F:\civion-builds" -File -ErrorAction SilentlyContinue |
-              Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-60) } |
-              Where-Object { $_.Name -notlike "build-history*" })
-          if ($files.Count -eq 0) { Write-Error "No fresh build output in F:\civion-builds"; exit 1 }
-          $files | Copy-Item -Destination $dest -Force
-          Get-ChildItem $dest | Select-Object Name, Length | Format-Table | Out-String | Write-Output
-
       - name: Upload APK, hash and build info
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: civion-mobile-${{ github.sha }}
-          path: out/
+          path: |
+            F:\civion-builds\${{ steps.build.outputs.artifact }}
+            F:\civion-builds\${{ steps.build.outputs.info }}
+            F:\civion-builds\${{ steps.build.outputs.log }}
           retention-days: 30
           if-no-files-found: error

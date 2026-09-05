@@ -229,6 +229,13 @@ try {
     Write-Output "SHA-256: $sha256"
     Write-Output "Info   : $infoPath"
 
+    if ($isCi -and $env:GITHUB_OUTPUT) {
+        "artifact=$targetName"                 | Add-Content -Path $env:GITHUB_OUTPUT -Encoding UTF8
+        "info=$([System.IO.Path]::GetFileName($infoPath))" | Add-Content -Path $env:GITHUB_OUTPUT -Encoding UTF8
+        "log=$([System.IO.Path]::GetFileName($logPath))"   | Add-Content -Path $env:GITHUB_OUTPUT -Encoding UTF8
+        "outdir=$OutDir"                       | Add-Content -Path $env:GITHUB_OUTPUT -Encoding UTF8
+    }
+
     if ($isCi -and $env:GITHUB_STEP_SUMMARY) {
         @(
             "### CIVION Mobile $Version ($Variant)"
