@@ -1,12 +1,12 @@
-name: CIVION Mobile — debug build
+name: CIVION Mobile — build
 
-# Builds the app-civion debug APK for every CIVION branch and publishes it as a
-# workflow artifact named after the exact commit. This exists so that no APK can
-# circulate without a commit it provably came from.
+# One build procedure, two callers. This workflow does not build anything itself:
+# it calls app-civion/tools/build-civion-mobile.ps1, the same script the owner runs
+# by hand. Commit identity, the engine-footprint check and the SHA-256 ledger all
+# live in that script, so a CI artifact and a hand-built artifact are equivalent.
 #
-# No secrets are used. civion.google.oauth.clientId.* is absent on CI by design,
-# so the CI build simply offers no OAuth provider; it is a build check, not a
-# distributable artifact.
+# Runs on a self-hosted Windows runner: the machine already carries JDK 21 and the
+# Android SDK, and self-hosted runners consume no GitHub Actions minutes.
 
 on:
   push:
@@ -16,6 +16,13 @@ on:
     branches:
       - 'civion/**'
   workflow_dispatch:
+    inputs:
+      variant:
+        description: 'Build variant'
+        required: false
+        default: 'debug'
+        type: choice
+        options: [debug, release]
 
 concurrency:
   group: civion-mobile-build-${{ github.ref }}
@@ -26,87 +33,30 @@ permissions:
 
 jobs:
   build:
-    name: assembleDebug
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+    name: build-civion-mobile.ps1
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 90
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Build app-civion debug
-        run: ./gradlew :app-civion:assembleDebug --stacktrace
-
-      - name: Collect APK and record its hash
-        run: |
-          set -euo pipefail
-          mkdir -p out
-          apk="$(find app-civion/build/outputs/apk -name '*.apk' -print -quit)"
-          if [ -z "$apk" ]; then
-            echo "No APK produced under app-civion/build/outputs/apk" >&2
-            exit 1
-          fi
-          short="${GITHUB_SHA::7}"
-          cp "$apk" "out/CIVION-Mobile-debug-${short}.apk"
-          ( cd out && sha256sum ./*.apk | tee SHA256SUMS.txt )
-          {
-            echo "commit: ${GITHUB_SHA}"
-            echo "ref: ${GITHUB_REF}"
-            echo "built: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo "source apk: ${apk}"
-          } > out/BUILD-INFO.txt
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: civion-mobile-debug-${{ github.sha }}
-          path: out/
-          retention-days: 30
-          if-no-files-found: error
-
-  footprint:
-    name: patch footprint
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    # The accepted architecture rests on one measurable claim: CIVION carries a
-    # third white-label application with zero engine changes. This job re-measures
-    # that claim on every push instead of trusting it.
-    steps:
+      # fetch-depth: 0 so the script can measure the footprint against the
+      # upstream base commit; a shallow checkout silently skips that check.
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Measure changes against the upstream base
+      - name: Build
+        shell: powershell
         run: |
-          set -euo pipefail
-          base=7fb13f7c226bcdede9b825d2caccfd60f4b0a45a
-          if ! git cat-file -e "${base}^{commit}" 2>/dev/null; then
-            echo "Upstream base ${base} not present in this checkout; skipping."
-            exit 0
-          fi
-          changed="$(git diff --name-only "${base}"..HEAD)"
-          total=$(echo "$changed" | sed '/^$/d' | wc -l)
-          engine=$(echo "$changed" | grep -E '^(legacy|mail|backend|core|feature)/' | grep -v '^feature/civion/' | wc -l || true)
-          {
-            echo '### CIVION patch footprint'
-            echo '```'
-            printf 'changed files vs upstream base : %s\n' "$total"
-            printf 'engine files changed           : %s\n' "$engine"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          if [ "$engine" -ne 0 ]; then
-            echo "$changed" | grep -E '^(legacy|mail|backend|core|feature)/' | grep -v '^feature/civion/' || true
-            echo "Engine files changed. civion-android-mail-edge-decision-r002 3.2 requires 0." >&2
-            exit 1
-          fi
+          .\app-civion\tools\build-civion-mobile.ps1 `
+            -Variant "${{ inputs.variant || 'debug' }}" `
+            -OutDir "${{ github.workspace }}\out"
+
+      - name: Upload APK, hash and build info
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: civion-mobile-${{ github.sha }}
+          path: out/
+          retention-days: 30
+          if-no-files-found: error
