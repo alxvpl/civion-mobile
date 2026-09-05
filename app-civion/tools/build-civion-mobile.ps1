@@ -222,6 +222,7 @@ try {
             "| commit | ``$commit`` |"
             "| branch | ``$branch`` |"
             "| engine files changed | $($engineChanged.Count) |"
+            "| published | $published |"
             "| size | $($apk.Length) bytes |"
             "| sha-256 | ``$sha256`` |"
         ) | Add-Content -Path $env:GITHUB_STEP_SUMMARY -Encoding UTF8
