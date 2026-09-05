@@ -1,0 +1,65 @@
+name: CIVION Mobile — build
+
+# One build procedure, two callers. This workflow does not build anything itself:
+# it calls app-civion/tools/build-civion-mobile.ps1, the same script the owner runs
+# by hand. Commit identity, the engine-footprint check and the SHA-256 ledger all
+# live in that script, so a CI artifact and a hand-built artifact are equivalent.
+#
+# Runs on a self-hosted Windows runner: the machine already carries JDK 21 and the
+# Android SDK, and self-hosted runners consume no GitHub Actions minutes.
+
+# Only `push` builds. In a single-owner repository a pull request from a branch
+# of the same repository would build the identical commit a second time on the
+# one available runner.
+on:
+  push:
+    branches:
+      - 'civion/**'
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: 'Build variant'
+        required: false
+        default: 'debug'
+        type: choice
+        options: [debug, release]
+
+concurrency:
+  group: civion-mobile-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build-civion-mobile.ps1
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 90
+
+    steps:
+      # fetch-depth: 0 so the script can measure the footprint against the
+      # upstream base commit; a shallow checkout silently skips that check.
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build
+        # The runner service executes under NETWORK SERVICE. Use a process-scoped
+        # bypass so the trusted repository script can run regardless of that
+        # service account's PowerShell execution policy; machine policy is unchanged.
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          .\app-civion\tools\build-civion-mobile.ps1 `
+            -Variant "${{ inputs.variant || 'debug' }}" `
+            -OutDir "${{ github.workspace }}\out"
+
+      - name: Upload APK, hash and build info
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: civion-mobile-${{ github.sha }}
+          path: out/
+          retention-days: 30
+          if-no-files-found: error
