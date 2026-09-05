@@ -238,31 +238,40 @@ try {
     $sha256 = (Get-FileHash -Algorithm SHA256 $targetApk).Hash
     $built  = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss zzz")
 
-    # ------------------------------------------------- verify OAuth identity ---
+    $guardLog = Join-Path $OutDir ("guard-{0}.txt" -f $suffix)
+    try {
+        # ------------------------------------------------- verify OAuth identity ---
 
-    if ($Variant -eq "debug") {
-        # cmd.exe carries the redirection: a native command writing to stderr under
-        # $ErrorActionPreference = "Stop" would otherwise abort the script.
-        $keytool = Join-Path $JavaHome "bin\keytool.exe"
-        $certOutput = & cmd.exe /d /c "`"$keytool`" -printcert -jarfile `"$targetApk`" 2>&1" | Out-String
-        $certMatch = [regex]::Match($certOutput, "SHA1:\s*([0-9A-Fa-f:]+)")
-        if (-not $certMatch.Success) {
-            throw "Could not read the signing certificate of $targetName; the OAuth identity cannot be verified."
-        }
-        $actualSha1 = $certMatch.Groups[1].Value.Replace(":", "").ToUpper()
-        if ($actualSha1 -ne $expectedSigningSha1) {
-            throw ("Signed with the wrong certificate. Expected {0}, got {1}. Google binds the OAuth client to this certificate; a build signed by any other key cannot sign in. Point civion.debug.storeFile at the keystore holding the expected key." -f $expectedSigningSha1, $actualSha1)
+        if ($Variant -eq "debug") {
+            # cmd.exe carries the redirection: a native command writing to stderr under
+            # $ErrorActionPreference = "Stop" would otherwise abort the script.
+            $keytool = Join-Path $JavaHome "bin\keytool.exe"
+            $certOutput = & cmd.exe /d /c "`"$keytool`" -printcert -jarfile `"$targetApk`" 2>&1" | Out-String
+            $certMatch = [regex]::Match($certOutput, "SHA1:\s*([0-9A-Fa-f:]+)")
+            if (-not $certMatch.Success) {
+                throw "Could not read the signing certificate of $targetName; the OAuth identity cannot be verified."
+            }
+            $actualSha1 = $certMatch.Groups[1].Value.Replace(":", "").ToUpper()
+            if ($actualSha1 -ne $expectedSigningSha1) {
+                throw ("Signed with the wrong certificate. Expected {0}, got {1}. Google binds the OAuth client to this certificate; a build signed by any other key cannot sign in. Point civion.debug.storeFile at the keystore holding the expected key." -f $expectedSigningSha1, $actualSha1)
+            }
+
+            $apkText = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($targetApk))
+            $found = $apkText.Contains($oauthClientId)
+            $apkText = $null
+            if (-not $found) {
+                throw "The OAuth client id is not present in $targetName. The build would offer no OAuth provider and Gmail would fall back to password authentication."
+            }
+
+            Write-Output ""
+            Write-Output "OAuth identity verified: nl.civion.mobile.debug / $expectedSigningSha1"
         }
 
-        $apkText = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($targetApk))
-        $found = $apkText.Contains($oauthClientId)
-        $apkText = $null
-        if (-not $found) {
-            throw "The OAuth client id is not present in $targetName. The build would offer no OAuth provider and Gmail would fall back to password authentication."
-        }
-
-        Write-Output ""
-        Write-Output "OAuth identity verified: nl.civion.mobile.debug / $expectedSigningSha1"
+        "guard: passed" | Set-Content -Path $guardLog -Encoding UTF8
+    }
+    catch {
+        @("guard: FAILED", $_.Exception.Message, $_.ScriptStackTrace) | Set-Content -Path $guardLog -Encoding UTF8
+        throw
     }
 
     $infoPath = Join-Path $OutDir ("BUILD-INFO-{0}.txt" -f $suffix)
