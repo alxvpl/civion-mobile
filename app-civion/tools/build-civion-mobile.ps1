@@ -147,11 +147,20 @@ try {
 
     # ------------------------------------------------------------------ build ---
 
-    # Build stamp: a number that moves with every build, so no two artifacts ever
-    # arrive under the same name. The commit stays in BUILD-INFO and the ledger.
-    $stamp     = Get-Date -Format "yyyyMMdd-HHmm"
-    $suffix    = $stamp
-    if ($isDirty) { $suffix = "$stamp-dirty" }
+    # Build number. Artifacts are named CIVION-Mobile-<base version>.<n>.apk, with n
+    # incrementing on every build; the commit stays in BUILD-INFO and in the ledger.
+    $baseVersion = ($Version -split "-")[0]
+    $lastNumber = 0
+    Get-ChildItem -Path $OutDir -Filter "CIVION-Mobile-$baseVersion.*.apk" -File -ErrorAction SilentlyContinue |
+        ForEach-Object {
+            if ($_.BaseName -match "^CIVION-Mobile-$([regex]::Escape($baseVersion))\.(\d+)$") {
+                $n = [int]$Matches[1]
+                if ($n -gt $lastNumber) { $lastNumber = $n }
+            }
+        }
+    $buildNumber = $lastNumber + 1
+    $suffix = "$baseVersion.$buildNumber"
+    if ($isDirty) { $suffix = "$suffix-dirty" }
     $logPath   = Join-Path $OutDir ("gradle-{0}-{1}.log" -f $Variant, $suffix)
     $assemble  = "assemble" + $Variant.Substring(0,1).ToUpper() + $Variant.Substring(1)
     $tasks     = ":app-civion:$assemble"
@@ -179,9 +188,9 @@ try {
     if (-not $source) { throw "Gradle succeeded but no APK was found under $apkDir" }
 
     $targetName = if ($Variant -eq "debug") {
-        "CIVION-Mobile-{0}-{1}.apk" -f $Version, $suffix
+        "CIVION-Mobile-{0}.apk" -f $suffix
     } else {
-        "CIVION-Mobile-{0}-{1}-{2}.apk" -f $Version, $Variant, $suffix
+        "CIVION-Mobile-{0}-{1}.apk" -f $suffix, $Variant
     }
     $targetApk  = Join-Path $OutDir $targetName
     Copy-Item -Force $source.FullName $targetApk
