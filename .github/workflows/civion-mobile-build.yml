@@ -66,8 +66,10 @@ jobs:
           $short = "${{ github.sha }}".Substring(0, 7)
           $dest = Join-Path "${{ github.workspace }}" "out"
           New-Item -ItemType Directory -Force -Path $dest | Out-Null
-          $files = @(Get-ChildItem -Path "F:\civion-builds" -Filter "*$short*" -File -ErrorAction SilentlyContinue)
-          if ($files.Count -eq 0) { Write-Error "No build output for $short in F:\civion-builds"; exit 1 }
+          $files = @(Get-ChildItem -Path "F:\civion-builds" -File -ErrorAction SilentlyContinue |
+              Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-60) } |
+              Where-Object { $_.Name -notlike "build-history*" })
+          if ($files.Count -eq 0) { Write-Error "No fresh build output in F:\civion-builds"; exit 1 }
           $files | Copy-Item -Destination $dest -Force
           Get-ChildItem $dest | Select-Object Name, Length | Format-Table | Out-String | Write-Output
 

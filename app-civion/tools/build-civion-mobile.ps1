@@ -147,8 +147,11 @@ try {
 
     # ------------------------------------------------------------------ build ---
 
-    $suffix    = $short
-    if ($isDirty) { $suffix = "$short+dirty" }
+    # Build stamp: a number that moves with every build, so no two artifacts ever
+    # arrive under the same name. The commit stays in BUILD-INFO and the ledger.
+    $stamp     = Get-Date -Format "yyyyMMdd-HHmm"
+    $suffix    = $stamp
+    if ($isDirty) { $suffix = "$stamp-dirty" }
     $logPath   = Join-Path $OutDir ("gradle-{0}-{1}.log" -f $Variant, $suffix)
     $assemble  = "assemble" + $Variant.Substring(0,1).ToUpper() + $Variant.Substring(1)
     $tasks     = ":app-civion:$assemble"
@@ -175,7 +178,11 @@ try {
     $source = Get-ChildItem -Path $apkDir -Filter *.apk -File -ErrorAction SilentlyContinue | Select-Object -First 1
     if (-not $source) { throw "Gradle succeeded but no APK was found under $apkDir" }
 
-    $targetName = "CIVION-Mobile-{0}-{1}-{2}.apk" -f $Version, $Variant, $suffix
+    $targetName = if ($Variant -eq "debug") {
+        "CIVION-Mobile-{0}-{1}.apk" -f $Version, $suffix
+    } else {
+        "CIVION-Mobile-{0}-{1}-{2}.apk" -f $Version, $Variant, $suffix
+    }
     $targetApk  = Join-Path $OutDir $targetName
     Copy-Item -Force $source.FullName $targetApk
 
