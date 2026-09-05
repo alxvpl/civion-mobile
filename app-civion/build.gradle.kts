@@ -41,6 +41,28 @@ val googleOAuthClientIdRelease = providers
     .gradleProperty("civion.google.oauth.clientId.release")
     .getOrElse("")
 
+/**
+ * CIVION Mobile debug signing.
+ *
+ * A Google OAuth client of type Android is bound to one package name AND one signing certificate.
+ * The default Android debug keystore is per user account, so a build made by the owner and a build
+ * made by the CI runner (a different Windows account) are signed by different certificates and only
+ * one of them can match the registered OAuth client.
+ *
+ * Point every machine at the same keystore to remove that divergence, e.g. in
+ * `~/.gradle/gradle.properties`:
+ *   civion.debug.storeFile=F:/civion-keys/civion-debug.jks
+ *   civion.debug.storePassword=android
+ *   civion.debug.keyAlias=androiddebugkey
+ *   civion.debug.keyPassword=android
+ *
+ * Absent, Gradle's own default debug keystore is used, exactly as before.
+ */
+val civionDebugStoreFile = providers.gradleProperty("civion.debug.storeFile")
+val civionDebugStorePassword = providers.gradleProperty("civion.debug.storePassword").getOrElse("android")
+val civionDebugKeyAlias = providers.gradleProperty("civion.debug.keyAlias").getOrElse("androiddebugkey")
+val civionDebugKeyPassword = providers.gradleProperty("civion.debug.keyPassword").getOrElse("android")
+
 val civionStoreFile = providers.gradleProperty("civion.release.storeFile")
 val civionStorePassword = providers.gradleProperty("civion.release.storePassword")
 val civionKeyAlias = providers.gradleProperty("civion.release.keyAlias")
@@ -124,6 +146,15 @@ android {
     }
 
     signingConfigs {
+        if (civionDebugStoreFile.isPresent) {
+            getByName("debug") {
+                storeFile = file(civionDebugStoreFile.get())
+                storePassword = civionDebugStorePassword
+                keyAlias = civionDebugKeyAlias
+                keyPassword = civionDebugKeyPassword
+            }
+        }
+
         if (hasCivionSigning) {
             create("release") {
                 storeFile = file(civionStoreFile.get())

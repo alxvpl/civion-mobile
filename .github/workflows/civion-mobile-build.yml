@@ -49,6 +49,12 @@ jobs:
           fetch-depth: 0
 
       - name: Build
+        id: build
+        env:
+          # Repository variables, not secrets: an Android OAuth client id is public by
+          # construction — the client is bound to package name and signing certificate.
+          CIVION_OAUTH_CLIENT_ID_DEBUG: ${{ vars.CIVION_OAUTH_CLIENT_ID_DEBUG }}
+          CIVION_DEBUG_KEYSTORE: ${{ vars.CIVION_DEBUG_KEYSTORE }}
         # The runner service executes under NETWORK SERVICE. Use a process-scoped
         # bypass so the trusted repository script can run regardless of that
         # service account's PowerShell execution policy; machine policy is unchanged.

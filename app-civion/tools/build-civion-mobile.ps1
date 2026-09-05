@@ -171,7 +171,19 @@ try {
     Write-Output "log   : $logPath"
     Write-Output "This can take several minutes..."
 
-    $gradleCommand = '"{0}" {1} --no-daemon --no-watch-fs > "{2}" 2>&1' -f (Join-Path $repositoryRoot "gradlew.bat"), $tasks, $logPath
+    # Values a machine may need to supply from outside the repository: the CIVION Google
+    # OAuth client id, and the shared debug keystore that the registered client is bound to.
+    $extraProperties = @()
+    if ($env:CIVION_OAUTH_CLIENT_ID_DEBUG) {
+        $extraProperties += "-Pcivion.google.oauth.clientId.debug=$($env:CIVION_OAUTH_CLIENT_ID_DEBUG)"
+    }
+    if ($env:CIVION_DEBUG_KEYSTORE) {
+        $extraProperties += "-Pcivion.debug.storeFile=$($env:CIVION_DEBUG_KEYSTORE)"
+    }
+    $extra = if ($extraProperties.Count -gt 0) { " " + ($extraProperties -join " ") } else { "" }
+    if ($extra) { Write-Output "extra  :$extra" }
+
+    $gradleCommand = '"{0}" {1}{2} --no-daemon --no-watch-fs > "{3}" 2>&1' -f (Join-Path $repositoryRoot "gradlew.bat"), $tasks, $extra, $logPath
     & cmd.exe /d /c $gradleCommand
     $gradleExitCode = $LASTEXITCODE
 
