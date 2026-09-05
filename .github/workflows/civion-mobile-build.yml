@@ -56,7 +56,16 @@ jobs:
         run: |
           .\app-civion\tools\build-civion-mobile.ps1 `
             -Variant "${{ inputs.variant || 'debug' }}" `
-            -OutDir "${{ github.workspace }}\out"
+            -OutDir "F:\civion-builds"
+
+      # Every build, CI or manual, lands in F:\civion-builds on this machine. The
+      # workflow artifact is a copy for anyone without access to the machine.
+      - name: Stage this commit's artifact for upload
+        shell: powershell
+        run: |
+          $short = "${{ github.sha }}".Substring(0,7)
+          New-Item -ItemType Directory -Force "${{ github.workspace }}\out" | Out-Null
+          Copy-Item "F:\civion-builds\*$short*" "${{ github.workspace }}\out\" -Force
 
       - name: Upload APK, hash and build info
         if: success()
