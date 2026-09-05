@@ -65,11 +65,61 @@ android {
     }
 
     androidResources {
+        // Same locale coverage as Thunderbird for Android; keep in sync with "supported_languages".
         localeFilters += listOf(
-            "en",
+            "ar",
+            "be",
             "bg",
-            "nl",
+            "br",
+            "ca",
+            "co",
+            "cs",
+            "cy",
+            "da",
             "de",
+            "el",
+            "en",
+            "en-rGB",
+            "eo",
+            "es",
+            "et",
+            "eu",
+            "fa",
+            "fi",
+            "fr",
+            "fy",
+            "ga",
+            "gd",
+            "gl",
+            "hr",
+            "hu",
+            "in",
+            "is",
+            "it",
+            "iw",
+            "ja",
+            "ko",
+            "lt",
+            "lv",
+            "nb",
+            "nl",
+            "nn",
+            "pl",
+            "pt-rBR",
+            "pt-rPT",
+            "ro",
+            "ru",
+            "sk",
+            "sl",
+            "sq",
+            "sr",
+            "sv",
+            "ta-rIN",
+            "tr",
+            "uk",
+            "vi",
+            "zh-rCN",
+            "zh-rTW",
         )
     }
 
@@ -142,7 +192,7 @@ android {
 dependencies {
     implementation(projects.appCommon)
     implementation(projects.core.ui.compose.common)
-    implementation(projects.core.ui.legacy.theme2.k9mail)
+    implementation(projects.core.ui.legacy.theme2.thunderbird)
     implementation(projects.feature.launcher)
     implementation(projects.feature.mail.message.list.api)
     implementation(projects.feature.mail.message.list.internal)
@@ -164,7 +214,7 @@ dependencies {
     implementation(projects.feature.onboarding.migration.noop)
 
     implementation(projects.feature.thundermail.api)
-    implementation(projects.feature.thundermail.k9mail)
+    implementation(projects.feature.thundermail.thunderbird)
 
     // No telemetry.
     implementation(projects.feature.telemetry.noop)

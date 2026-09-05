@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- CIVION Mobile styles. The parents remain the upstream Theme2.K9.* styles:
-         CIVION Mobile 0.1.0-alpha introduces no theme module of its own. -->
     <style name="Theme.Civion.Startup" parent="Theme2.Main.Startup" />
 
-    <style name="Theme.Civion.Light" parent="Theme2.K9.Light">
+    <style name="Theme.Civion.Light" parent="Theme2.Thunderbird.Light">
         <item name="actionModeCloseDrawable">@drawable/ic_close</item>
         <item name="actionBarPopupTheme">@style/Widget.App.ActionMode.PopupMenu</item>
         <item name="toolbarStyle">@style/Widget.App.Toolbar</item>
@@ -41,7 +39,7 @@
         <item name="openpgp_dark_grey">#888</item>
     </style>
 
-    <style name="Theme.Civion.Dark" parent="Theme2.K9.Dark">
+    <style name="Theme.Civion.Dark" parent="Theme2.Thunderbird.Dark">
         <item name="actionModeCloseDrawable">@drawable/ic_close</item>
         <item name="actionBarPopupTheme">@style/Widget.App.ActionMode.PopupMenu</item>
         <item name="toolbarStyle">@style/Widget.App.Toolbar</item>
@@ -78,6 +76,9 @@
         <item name="openpgp_dark_grey">#bbb</item>
     </style>
 
+    <style name="Theme.Civion.Light.Dialog" parent="Theme.Civion.Light" />
+    <style name="Theme.Civion.Dark.Dialog" parent="Theme.Civion.Dark" />
+
     <style name="Theme.Civion.Light.Dialog.Translucent" parent="Theme.Material3.Light.Dialog">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:colorBackgroundCacheHint">@null</item>
@@ -91,9 +92,6 @@
         <item name="tintColorBulletPointNegative">#dd2222</item>
         <item name="tintColorBulletPointNeutral">#bbb</item>
     </style>
-
-    <style name="Theme.Civion.Light.Dialog" parent="Theme.Civion.Light" />
-    <style name="Theme.Civion.Dark.Dialog" parent="Theme.Civion.Dark" />
 
     <style name="Theme.Civion.Dark.Dialog.Translucent" parent="Theme.Material3.Dark.Dialog">
         <item name="android:windowBackground">@android:color/transparent</item>
@@ -112,5 +110,4 @@
     <style name="Theme.Civion.DayNight" parent="Theme.Civion.Light" />
     <style name="Theme.Civion.DayNight.Dialog" parent="Theme.Civion.Light.Dialog" />
     <style name="Theme.Civion.DayNight.Dialog.Translucent" parent="Theme.Civion.Light.Dialog.Translucent" />
-
 </resources>

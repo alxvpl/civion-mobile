@@ -9,5 +9,5 @@ import org.koin.dsl.module
 val civionFeatureFlagModule = module {
     includes(featureFlagModule)
     factory<AppVariantOverrides.Factory> { CivionOverrides.Factory }
-    factory { FlagRegistryOverrideSerializer(k9Factory = get(), thunderbirdFactory = EmptyAppVariantOverride) }
+    factory { FlagRegistryOverrideSerializer(k9Factory = EmptyAppVariantOverride, thunderbirdFactory = get()) }
 }
