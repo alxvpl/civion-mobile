@@ -241,7 +241,10 @@ try {
     # ------------------------------------------------- verify OAuth identity ---
 
     if ($Variant -eq "debug") {
-        $certOutput = & keytool -printcert -jarfile $targetApk 2>&1 | Out-String
+        # cmd.exe carries the redirection: a native command writing to stderr under
+        # $ErrorActionPreference = "Stop" would otherwise abort the script.
+        $keytool = Join-Path $JavaHome "bin\keytool.exe"
+        $certOutput = & cmd.exe /d /c "`"$keytool`" -printcert -jarfile `"$targetApk`" 2>&1" | Out-String
         $certMatch = [regex]::Match($certOutput, "SHA1:\s*([0-9A-Fa-f:]+)")
         if (-not $certMatch.Success) {
             throw "Could not read the signing certificate of $targetName; the OAuth identity cannot be verified."
@@ -251,20 +254,9 @@ try {
             throw ("Signed with the wrong certificate. Expected {0}, got {1}. Google binds the OAuth client to this certificate; a build signed by any other key cannot sign in. Point civion.debug.storeFile at the keystore holding the expected key." -f $expectedSigningSha1, $actualSha1)
         }
 
-        $apkBytes = [System.IO.File]::ReadAllBytes($targetApk)
-        $needle = [System.Text.Encoding]::ASCII.GetBytes($oauthClientId)
-        $found = $false
-        $limit = $apkBytes.Length - $needle.Length
-        for ($i = 0; $i -le $limit -and -not $found; $i++) {
-            if ($apkBytes[$i] -eq $needle[0]) {
-                $match = $true
-                for ($j = 1; $j -lt $needle.Length; $j++) {
-                    if ($apkBytes[$i + $j] -ne $needle[$j]) { $match = $false; break }
-                }
-                if ($match) { $found = $true }
-            }
-        }
-        $apkBytes = $null
+        $apkText = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($targetApk))
+        $found = $apkText.Contains($oauthClientId)
+        $apkText = $null
         if (-not $found) {
             throw "The OAuth client id is not present in $targetName. The build would offer no OAuth provider and Gmail would fall back to password authentication."
         }
