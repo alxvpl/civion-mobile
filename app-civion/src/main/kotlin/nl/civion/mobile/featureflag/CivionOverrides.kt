@@ -1,6 +1,5 @@
 package nl.civion.mobile.featureflag
 
-import net.thunderbird.core.featureflag.keys.GeneratedFeatureFlagKey
 import net.thunderbird.core.featureflag.model.AppVariantOverrides
 import net.thunderbird.core.featureflag.model.BaseAppVariantOverrides
 import net.thunderbird.core.featureflag.model.FlagOverrides
@@ -30,14 +29,17 @@ class CivionOverrides(wrapper: Map<String, FlagOverrides>) : BaseAppVariantOverr
         /**
          * Flags CIVION sets for itself, applied to every build variant.
          *
-         * [GeneratedFeatureFlagKey.USE_COMPOSE_FOR_MESSAGE_LIST_ITEMS] renders the message list rows
-         * with the Compose implementation, which takes its colours and typography from the CIVION
-         * theme instead of the classic XML row. Upstream ships it disabled while the migration is in
-         * progress; it is enabled here for evaluation and is reverted by removing this entry.
+         * Empty: CIVION currently runs on the catalog defaults.
+         *
+         * `use_compose_for_message_list_items` was enabled here and evaluated on device in
+         * `0.1.0.10`, then rejected. The Compose row replaces typography with chrome — unread became
+         * a separate dot in its own gutter instead of a heavier subject, the sender showed the raw
+         * address on a line of its own rather than the display name, and the monogram colours spread
+         * accent across the list. The classic row carries the same information in less space and
+         * reads better. Upstream ships the flag disabled and marks the bridge deprecated while the
+         * migration is in progress; revisit when it is promoted, not before.
          */
-        private val CIVION_FLAGS: FlagOverrides = mapOf(
-            GeneratedFeatureFlagKey.USE_COMPOSE_FOR_MESSAGE_LIST_ITEMS.key to true,
-        )
+        private val CIVION_FLAGS: FlagOverrides = emptyMap()
 
         val Factory = AppVariantOverrides.Factory {
             CivionOverrides(
