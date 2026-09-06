@@ -5,6 +5,7 @@ import com.fsck.k9.AppConfig
 import com.fsck.k9.DefaultAppConfig
 import com.fsck.k9.activity.MessageCompose
 import net.thunderbird.app.common.appCommonModule
+import org.koin.android.ext.koin.androidApplication
 import net.thunderbird.core.common.oauth.OAuthConfigurationFactory
 import net.thunderbird.core.common.oauth.OAuthConfigurationProvider
 import nl.civion.mobile.auth.CivionOAuthConfigurationFactory
@@ -40,7 +41,7 @@ val appModule = module {
     single(named("ClientInfoAppName")) { BuildConfig.CLIENT_INFO_APP_NAME }
     single(named("ClientInfoAppVersion")) { BuildConfig.VERSION_NAME }
     single<AppConfig> { appConfig }
-    single<OAuthConfigurationFactory> { CivionOAuthConfigurationFactory() }
+    single<OAuthConfigurationFactory> { CivionOAuthConfigurationFactory(context = androidApplication()) }
 
     developmentModuleAdditions()
 

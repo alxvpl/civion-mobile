@@ -37,6 +37,25 @@ val testCoverageEnabled = providers
 val googleOAuthClientIdDebug = providers
     .gradleProperty("civion.google.oauth.clientId.debug")
     .getOrElse("")
+
+/**
+ * CIVION-owned Microsoft (Entra) client ids, per application id.
+ *
+ * Registered as an Android platform application, which binds the client to the package name and the
+ * signing certificate exactly as Google does. The redirect uri is derived at runtime from the
+ * application's own signature, so it can never drift from the key that signed the build.
+ *
+ *   civion.microsoft.oauth.clientId.debug=<application (client) id>
+ *   civion.microsoft.oauth.clientId.release=<application (client) id>
+ *
+ * Absent, the application simply offers no Microsoft OAuth provider.
+ */
+val microsoftOAuthClientIdDebug = providers
+    .gradleProperty("civion.microsoft.oauth.clientId.debug")
+    .getOrElse("")
+val microsoftOAuthClientIdRelease = providers
+    .gradleProperty("civion.microsoft.oauth.clientId.release")
+    .getOrElse("")
 val googleOAuthClientIdRelease = providers
     .gradleProperty("civion.google.oauth.clientId.release")
     .getOrElse("")
@@ -179,6 +198,12 @@ android {
                 "\"$googleOAuthClientIdRelease\"",
             )
 
+            buildConfigField(
+                "String",
+                "MICROSOFT_OAUTH_CLIENT_ID",
+                "\"$microsoftOAuthClientIdRelease\"",
+            )
+
             isMinifyEnabled = false
             isShrinkResources = false
 
@@ -195,6 +220,12 @@ android {
                 "String",
                 "GOOGLE_OAUTH_CLIENT_ID",
                 "\"$googleOAuthClientIdDebug\"",
+            )
+
+            buildConfigField(
+                "String",
+                "MICROSOFT_OAUTH_CLIENT_ID",
+                "\"$microsoftOAuthClientIdDebug\"",
             )
 
             enableUnitTestCoverage = testCoverageEnabled
