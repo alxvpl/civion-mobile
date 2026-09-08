@@ -15,6 +15,7 @@ android {
 
 dependencies {
     implementation(projects.core.common)
+    implementation(projects.core.android.account)
     implementation(projects.core.validation)
     implementation(projects.core.ui.contract)
     implementation(projects.core.ui.navigation)
@@ -25,6 +26,7 @@ dependencies {
     implementation(projects.mail.protocols.pop3)
     implementation(projects.mail.protocols.smtp)
     implementation(projects.feature.mail.folder.api)
+    implementation(projects.feature.mail.account.api)
 
     implementation(projects.feature.autodiscovery.service)
     implementation(projects.feature.autodiscovery.demo)

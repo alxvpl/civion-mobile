@@ -107,4 +107,57 @@ class ValidateEmailAddressTest {
             .prop(Outcome.Failure<ValidationError>::error)
             .isInstanceOf<ValidateEmailAddressError.InvalidEmailAddress>()
     }
+
+    @Test
+    fun `should fail when email address is already added`() {
+        val testSubject = ValidateEmailAddress { listOf("test@example.com") }
+
+        val result = testSubject.execute("test@example.com")
+
+        assertThat(result).isInstanceOf<Outcome.Failure<ValidationError>>()
+            .prop(Outcome.Failure<ValidationError>::error)
+            .isInstanceOf<ValidateEmailAddressError.AlreadyAdded>()
+    }
+
+    @Test
+    fun `should fail when email address is already added with different capitalisation`() {
+        val testSubject = ValidateEmailAddress { listOf("test@example.com") }
+
+        val result = testSubject.execute("Test@Example.COM")
+
+        assertThat(result).isInstanceOf<Outcome.Failure<ValidationError>>()
+            .prop(Outcome.Failure<ValidationError>::error)
+            .isInstanceOf<ValidateEmailAddressError.AlreadyAdded>()
+    }
+
+    @Test
+    fun `should fail when email address is already added with surrounding whitespace`() {
+        val testSubject = ValidateEmailAddress { listOf("test@example.com") }
+
+        val result = testSubject.execute("  test@example.com  ")
+
+        assertThat(result).isInstanceOf<Outcome.Failure<ValidationError>>()
+            .prop(Outcome.Failure<ValidationError>::error)
+            .isInstanceOf<ValidateEmailAddressError.AlreadyAdded>()
+    }
+
+    @Test
+    fun `should fail when a stored address differs only by capitalisation or whitespace`() {
+        val testSubject = ValidateEmailAddress { listOf("  Test@Example.COM ") }
+
+        val result = testSubject.execute("test@example.com")
+
+        assertThat(result).isInstanceOf<Outcome.Failure<ValidationError>>()
+            .prop(Outcome.Failure<ValidationError>::error)
+            .isInstanceOf<ValidateEmailAddressError.AlreadyAdded>()
+    }
+
+    @Test
+    fun `should succeed when email address is not among the existing ones`() {
+        val testSubject = ValidateEmailAddress { listOf("other@example.com") }
+
+        val result = testSubject.execute("test@example.com")
+
+        assertThat(result).isInstanceOf<Outcome.Success<Unit>>()
+    }
 }

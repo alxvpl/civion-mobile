@@ -58,6 +58,10 @@ private fun ValidateEmailAddress.ValidateEmailAddressError.toEmailAddressErrorSt
         ValidateEmailAddress.ValidateEmailAddressError.InvalidEmailAddress -> {
             resources.getString(R.string.account_setup_auto_discovery_validation_error_email_address_invalid)
         }
+
+        ValidateEmailAddress.ValidateEmailAddressError.AlreadyAdded -> {
+            resources.getString(R.string.account_setup_auto_discovery_validation_error_email_address_already_added)
+        }
     }
 }
 

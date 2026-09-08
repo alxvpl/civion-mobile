@@ -13,6 +13,7 @@ import app.k9mail.feature.account.setup.domain.DomainContract
 import app.k9mail.feature.account.setup.domain.usecase.CreateAccount
 import app.k9mail.feature.account.setup.domain.usecase.GetAutoDiscovery
 import app.k9mail.feature.account.setup.domain.usecase.GetSpecialFolderOptions
+import app.k9mail.feature.account.setup.domain.usecase.ValidateEmailAddress
 import app.k9mail.feature.account.setup.domain.usecase.ValidateSpecialFolderOptions
 import app.k9mail.feature.account.setup.navigation.AccountSetupNavigation
 import app.k9mail.feature.account.setup.navigation.DefaultAccountSetupNavigation
@@ -29,6 +30,7 @@ import app.k9mail.feature.account.setup.ui.specialfolders.SpecialFoldersFormUiMo
 import app.k9mail.feature.account.setup.ui.specialfolders.SpecialFoldersViewModel
 import com.fsck.k9.mail.folders.FolderFetcher
 import com.fsck.k9.mail.store.imap.ImapFolderFetcher
+import net.thunderbird.core.android.account.LegacyAccountManager
 import okhttp3.OkHttpClient
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
@@ -77,7 +79,18 @@ val featureAccountSetupModule: Module = module {
         )
     }
 
-    factory<AccountAutoDiscoveryContract.Validator> { AccountAutoDiscoveryValidator() }
+    factory<AccountAutoDiscoveryContract.Validator> {
+        val accountManager = get<LegacyAccountManager>()
+
+        AccountAutoDiscoveryValidator(
+            // One email address, one account: the addresses already set up are what the first
+            // step of setup refuses a duplicate of. Read on each validation rather than captured,
+            // so an account added or removed meanwhile is taken into account.
+            emailAddressValidator = ValidateEmailAddress(
+                existingEmailAddresses = { accountManager.getAccounts().map { it.email } },
+            ),
+        )
+    }
     factory<DisplayOptionsContract.Validator> { DisplayOptionsValidator() }
 
     viewModel {
