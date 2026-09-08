@@ -7,7 +7,6 @@ val notificationModule = module {
         K9NotificationActionCreator(
             context = get(),
             defaultFolderProvider = get(),
-            messageStoreManager = get(),
             generalSettingsManager = get(),
         )
     }

@@ -9,7 +9,6 @@ import android.net.Uri
 import androidx.core.app.PendingIntentCompat
 import app.k9mail.feature.launcher.FeatureLauncherActivity
 import app.k9mail.feature.launcher.FeatureLauncherTarget
-import app.k9mail.legacy.mailstore.MessageStoreManager
 import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.activity.MessageHomeActivity
 import com.fsck.k9.activity.compose.MessageActions
@@ -34,16 +33,22 @@ import net.thunderbird.feature.search.legacy.LocalMessageSearch
 internal class K9NotificationActionCreator(
     private val context: Context,
     private val defaultFolderProvider: DefaultFolderProvider,
-    private val messageStoreManager: MessageStoreManager,
     private val generalSettingsManager: GeneralSettingsManager,
 ) : NotificationActionCreator {
     private val interactionSettings get() = generalSettingsManager.getConfig().interaction
 
+    /**
+     * Opens the message inside its own account.
+     *
+     * A notification names one message of one account, so that is the context it opens in and the
+     * context Back returns to: the message, then that account's folder, then that account's Inbox.
+     * The unified inbox is deliberately not substituted here even when it is enabled. Doing so
+     * placed the message in a list spanning every account, and backing out of it left the user in
+     * a combined screen belonging to no account rather than in the account the notification was
+     * about. The unified inbox remains available everywhere else it is offered.
+     */
     override fun createViewMessagePendingIntent(messageReference: MessageReference): PendingIntent {
-        val openInUnifiedInbox =
-            generalSettingsManager.getConfig().display.inboxSettings.isShowUnifiedInbox &&
-                isIncludedInUnifiedInbox(messageReference)
-        val intent = createMessageViewIntent(messageReference, openInUnifiedInbox)
+        val intent = createMessageViewIntent(messageReference, openInUnifiedInbox = false)
 
         return PendingIntentCompat.getActivity(context, 0, intent, FLAG_UPDATE_CURRENT, false)!!
     }
@@ -59,14 +64,9 @@ internal class K9NotificationActionCreator(
     ): PendingIntent {
         val folderIds = extractFolderIds(messageReferences)
 
-        val intent = if (generalSettingsManager.getConfig()
-                .display
-                .inboxSettings
-                .isShowUnifiedInbox &&
-            areAllIncludedInUnifiedInbox(account, folderIds)
-        ) {
-            createUnifiedInboxIntent(account)
-        } else if (folderIds.size == 1) {
+        // Same reasoning as createViewMessagePendingIntent: a notification belongs to one
+        // account, so tapping it opens that account rather than the combined inbox.
+        val intent = if (folderIds.size == 1) {
             createMessageListIntent(account, folderIds.first())
         } else {
             createNewMessagesIntent(account)
@@ -259,12 +259,6 @@ internal class K9NotificationActionCreator(
         }
     }
 
-    private fun createUnifiedInboxIntent(account: LegacyAccountDto): Intent {
-        return MessageHomeActivity.createUnifiedInboxIntent(context, account).apply {
-            data = Uri.parse("data:,unifiedInbox/${account.uuid}")
-        }
-    }
-
     private fun createNewMessagesIntent(account: LegacyAccountDto): Intent {
         return MessageHomeActivity.createNewMessagesIntent(context, account).apply {
             data = Uri.parse("data:,newMessages/${account.uuid}")
@@ -273,15 +267,5 @@ internal class K9NotificationActionCreator(
 
     private fun extractFolderIds(messageReferences: List<MessageReference>): Set<Long> {
         return messageReferences.asSequence().map { it.folderId }.toSet()
-    }
-
-    private fun areAllIncludedInUnifiedInbox(account: LegacyAccountDto, folderIds: Collection<Long>): Boolean {
-        val messageStore = messageStoreManager.getMessageStore(account)
-        return messageStore.areAllIncludedInUnifiedInbox(folderIds)
-    }
-
-    private fun isIncludedInUnifiedInbox(messageReference: MessageReference): Boolean {
-        val messageStore = messageStoreManager.getMessageStore(messageReference.accountUuid)
-        return messageStore.areAllIncludedInUnifiedInbox(listOf(messageReference.folderId))
     }
 }
