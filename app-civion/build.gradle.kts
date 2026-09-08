@@ -7,7 +7,7 @@ val testCoverageEnabled = providers
     .gradleProperty("testCoverageEnabled")
     .isPresent
 
-/**
+/*
  * CIVION Mobile release signing.
  *
  * Deliberately NOT using `createSigningConfig(project, SigningType...)` from the upstream build
@@ -21,7 +21,7 @@ val testCoverageEnabled = providers
  *   civion.release.keyAlias=civion
  *   civion.release.keyPassword=...
  */
-/**
+/*
  * CIVION-owned Google OAuth client ids, per application id.
  *
  * A Google OAuth client of type Android is bound to one package name and one signing certificate,
@@ -38,7 +38,7 @@ val googleOAuthClientIdDebug = providers
     .gradleProperty("civion.google.oauth.clientId.debug")
     .getOrElse("")
 
-/**
+/*
  * CIVION-owned Microsoft (Entra) client ids, per application id.
  *
  * Registered as an Android platform application, which binds the client to the package name and the
@@ -60,7 +60,7 @@ val googleOAuthClientIdRelease = providers
     .gradleProperty("civion.google.oauth.clientId.release")
     .getOrElse("")
 
-/**
+/*
  * CIVION Mobile debug signing.
  *
  * A Google OAuth client of type Android is bound to one package name AND one signing certificate.
@@ -263,6 +263,7 @@ dependencies {
     implementation(projects.legacy.core)
     implementation(projects.legacy.ui.legacy)
 
+    implementation(projects.core.common)
     implementation(projects.core.featureflag)
 
     implementation(projects.feature.autodiscovery.api)
