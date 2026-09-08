@@ -30,13 +30,7 @@ class ValidateEmailAddress(
 ) : UseCase.ValidateEmailAddress {
 
     override fun execute(emailAddress: String): ValidationOutcome {
-        if (emailAddress.isBlank()) {
-            return Outcome.Failure(ValidateEmailAddressError.EmptyEmailAddress)
-        }
-
-        if (isAlreadyAdded(emailAddress)) {
-            return Outcome.Failure(ValidateEmailAddressError.AlreadyAdded)
-        }
+        rejectBeforeParsing(emailAddress)?.let { return Outcome.Failure(it) }
 
         return try {
             val parsedEmailAddress = emailAddress.toUserEmailAddress()
@@ -78,14 +72,23 @@ class ValidateEmailAddress(
     }
 
     /**
+     * The reasons an address can be turned down without parsing it at all.
+     *
+     * A duplicate is one of them: a padded or differently cased duplicate would otherwise be
+     * reported as a malformed address rather than as the duplicate it is.
+     */
+    private fun rejectBeforeParsing(emailAddress: String): ValidateEmailAddressError? = when {
+        emailAddress.isBlank() -> ValidateEmailAddressError.EmptyEmailAddress
+        isAlreadyAdded(emailAddress) -> ValidateEmailAddressError.AlreadyAdded
+        else -> null
+    }
+
+    /**
      * Whether this address is already set up as an account.
      *
      * The comparison is on the address as a person would read it: surrounding whitespace is
      * ignored, and case is not significant. " User@Example.COM " and "user@example.com" are the
      * same account, so the second one is refused.
-     *
-     * Checked before parsing so that a padded or differently cased duplicate is reported as the
-     * duplicate it is, rather than as a malformed address.
      */
     private fun isAlreadyAdded(emailAddress: String): Boolean {
         val candidate = emailAddress.normalizedForComparison()

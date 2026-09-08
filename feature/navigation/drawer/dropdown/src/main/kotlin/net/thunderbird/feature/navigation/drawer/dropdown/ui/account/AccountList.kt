@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -76,47 +77,69 @@ internal fun AccountList(
             items = orderedAccounts,
             key = { account -> account.id },
         ) { account ->
-            val isDragged = account.id == dragState.draggedId
-
             AccountListItem(
                 account = account,
                 onClick = { onAccountClick(account) },
                 selected = selectedAccount == account,
                 showStarredCount = showStarredCount,
-                modifier = Modifier
-                    .zIndex(if (isDragged) 1f else 0f)
-                    .graphicsLayer { translationY = if (isDragged) dragState.offset else 0f }
-                    .alpha(if (isDragged) DRAGGED_ITEM_ALPHA else 1f)
-                    .then(
-                        if (account is UnifiedDisplayAccount) {
-                            Modifier
-                        } else {
-                            Modifier.pointerInput(account.id) {
-                                detectDragGesturesAfterLongPress(
-                                    onDragStart = {
-                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        dragState.start(account.id)
-                                    },
-                                    onDrag = { change, dragAmount ->
-                                        change.consume()
-                                        dragState.drag(
-                                            distance = dragAmount.y,
-                                            rowHeight = listState.heightOf(account.id),
-                                            lowerBound = firstMovableIndex,
-                                        )
-                                    },
-                                    onDragEnd = {
-                                        dragState.finish(firstMovableIndex)?.let { position ->
-                                            onAccountMove(account.id, position)
-                                        }
-                                    },
-                                    onDragCancel = { dragState.cancel(accountIds) },
-                                )
-                            }
-                        },
-                    ),
+                modifier = Modifier.draggableAccount(
+                    account = account,
+                    dragState = dragState,
+                    listState = listState,
+                    firstMovableIndex = firstMovableIndex,
+                    haptics = haptics,
+                    onAccountMove = onAccountMove,
+                ),
             )
         }
+    }
+}
+
+/**
+ * Lifts the account under a long press and lets it be dragged to a new position.
+ *
+ * The unified account is not draggable and gets no gesture handler at all.
+ */
+private fun Modifier.draggableAccount(
+    account: DisplayAccount,
+    dragState: AccountDragState,
+    listState: LazyListState,
+    firstMovableIndex: Int,
+    haptics: HapticFeedback,
+    onAccountMove: (accountId: String, toPosition: Int) -> Unit,
+): Modifier {
+    val isDragged = account.id == dragState.draggedId
+
+    val lifted = this
+        .zIndex(if (isDragged) 1f else 0f)
+        .graphicsLayer { translationY = if (isDragged) dragState.offset else 0f }
+        .alpha(if (isDragged) DRAGGED_ITEM_ALPHA else 1f)
+
+    if (account is UnifiedDisplayAccount) return lifted
+
+    // Keyed on the bound as well: the unified account appearing or disappearing shifts every
+    // position, and the handler would otherwise keep using the bound it was installed with.
+    return lifted.pointerInput(account.id, firstMovableIndex) {
+        detectDragGesturesAfterLongPress(
+            onDragStart = {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                dragState.start(account.id)
+            },
+            onDrag = { change, dragAmount ->
+                change.consume()
+                dragState.drag(
+                    distance = dragAmount.y,
+                    rowHeight = listState.heightOf(account.id),
+                    lowerBound = firstMovableIndex,
+                )
+            },
+            onDragEnd = {
+                dragState.finish(firstMovableIndex)?.let { position ->
+                    onAccountMove(account.id, position)
+                }
+            },
+            onDragCancel = { dragState.cancel() },
+        )
     }
 }
 
@@ -136,18 +159,21 @@ private class AccountDragState(initialIds: List<String>) {
     var offset by mutableFloatStateOf(0f)
         private set
 
+    private var idsBeforeDrag = initialIds
     private var startPosition = -1
 
     /** Takes the account list as it now is, unless the user is in the middle of a drag. */
     fun adoptIfIdle(accountIds: List<String>) {
         if (draggedId == null) {
             orderedIds = accountIds
+            idsBeforeDrag = accountIds
         }
     }
 
     fun start(accountId: String) {
         draggedId = accountId
         offset = 0f
+        idsBeforeDrag = orderedIds
         startPosition = orderedIds.indexOf(accountId)
     }
 
@@ -158,21 +184,16 @@ private class AccountDragState(initialIds: List<String>) {
      */
     fun drag(distance: Float, rowHeight: Float, lowerBound: Int) {
         offset += distance
-        if (rowHeight <= 0f) return
 
-        val accountId = draggedId ?: return
-        val from = orderedIds.indexOf(accountId)
-        if (from == -1) return
+        val from = draggedId?.let { orderedIds.indexOf(it) } ?: -1
+        if (rowHeight <= 0f || from == -1) return
 
         val to = (from + (offset / rowHeight).roundToInt())
             .coerceIn(lowerBound.coerceAtLeast(0), orderedIds.lastIndex)
-        if (to == from) return
-
-        orderedIds = orderedIds.toMutableList().apply {
-            removeAt(from)
-            add(to, accountId)
+        if (to != from) {
+            orderedIds = orderedIds.reposition(from, to)
+            offset -= (to - from) * rowHeight
         }
-        offset -= (to - from) * rowHeight
     }
 
     /**
@@ -180,23 +201,24 @@ private class AccountDragState(initialIds: List<String>) {
      * it ended up where it started.
      */
     fun finish(firstMovableIndex: Int): Int? {
-        val accountId = draggedId ?: return null
-        val index = orderedIds.indexOf(accountId)
+        val index = draggedId?.let { orderedIds.indexOf(it) } ?: -1
 
         draggedId = null
         offset = 0f
 
-        if (index == -1 || index == startPosition || firstMovableIndex < 0) return null
-
-        return index - firstMovableIndex
+        val moved = index >= 0 && index != startPosition && firstMovableIndex >= 0
+        return if (moved) index - firstMovableIndex else null
     }
 
-    fun cancel(accountIds: List<String>) {
+    fun cancel() {
         draggedId = null
         offset = 0f
-        orderedIds = accountIds
+        orderedIds = idsBeforeDrag
     }
 }
+
+private fun List<String>.reposition(from: Int, to: Int): List<String> =
+    toMutableList().apply { add(to, removeAt(from)) }
 
 private fun LazyListState.heightOf(key: Any): Float =
     layoutInfo.visibleItemsInfo.firstOrNull { it.key == key }?.size?.toFloat() ?: 0f

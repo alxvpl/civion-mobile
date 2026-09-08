@@ -1452,8 +1452,7 @@ open class MessageHomeActivity :
      * the user never selected.
      */
     private fun rememberNavigationState(folderIds: List<Long>) {
-        if (!singleFolderMode) return
-        val accountUuid = account?.uuid ?: return
+        val accountUuid = account?.uuid?.takeIf { singleFolderMode } ?: return
         val folderId = folderIds.firstOrNull() ?: return
 
         CivionNavigationState.recordActiveAccount(this, accountUuid, folderId)
