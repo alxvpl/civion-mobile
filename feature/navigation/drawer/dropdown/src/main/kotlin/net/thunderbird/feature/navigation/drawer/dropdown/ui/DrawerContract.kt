@@ -49,6 +49,7 @@ internal interface DrawerContract {
         data object OnSyncAccount : Event
         data object OnSyncAllAccounts : Event
         data object OnAddAccountClick : Event
+        data class OnAccountMove(val accountId: String, val toPosition: Int) : Event
     }
 
     sealed interface Effect {

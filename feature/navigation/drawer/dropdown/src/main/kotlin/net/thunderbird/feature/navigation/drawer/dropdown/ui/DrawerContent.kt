@@ -139,6 +139,9 @@ private fun AccountContent(
                 accounts = state.accounts,
                 selectedAccount = selectedAccount,
                 onAccountClick = { onEvent(Event.OnAccountClick(it)) },
+                onAccountMove = { accountId, position ->
+                    onEvent(Event.OnAccountMove(accountId, position))
+                },
                 showStarredCount = state.config.showStarredCount,
                 modifier = Modifier.weight(1f),
             )

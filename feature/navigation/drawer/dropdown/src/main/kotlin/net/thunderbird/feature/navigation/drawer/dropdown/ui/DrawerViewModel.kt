@@ -40,6 +40,7 @@ internal class DrawerViewModel(
     private val getDisplayTreeFolder: UseCase.GetDisplayTreeFolder,
     private val syncAccount: UseCase.SyncAccount,
     private val syncAllAccounts: UseCase.SyncAllAccounts,
+    private val moveAccount: UseCase.MoveAccount,
     private val maxNestingLevel: Int = 2,
     initialState: State = State(),
 ) : BaseViewModel<State, Event, Effect>(
@@ -187,6 +188,20 @@ internal class DrawerViewModel(
             Event.OnSyncAllAccounts -> onSyncAllAccounts()
 
             Event.OnAddAccountClick -> emitEffect(Effect.OpenAddAccount)
+
+            is Event.OnAccountMove -> onAccountMove(event.accountId, event.toPosition)
+        }
+    }
+
+    /**
+     * Stores the order the user dragged the accounts into.
+     *
+     * Nothing is written to the state here: the account manager is the one order there is, and the
+     * list re-emits with the accounts in their new order once it has been saved.
+     */
+    private fun onAccountMove(accountId: String, toPosition: Int) {
+        viewModelScope.launch {
+            moveAccount(accountId, toPosition)
         }
     }
 

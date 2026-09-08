@@ -9,10 +9,9 @@ import net.thunderbird.core.android.account.LegacyAccountDtoManager
 internal class FakeLegacyAccountDtoManager(
     val recordedParameters: MutableList<String> = mutableListOf(),
     private val accounts: List<LegacyAccountDto> = emptyList(),
+    val movedAccounts: MutableList<Pair<String, Int>> = mutableListOf(),
 ) : LegacyAccountDtoManager {
-    override fun getAccounts(): List<LegacyAccountDto> {
-        TODO("Not yet implemented")
-    }
+    override fun getAccounts(): List<LegacyAccountDto> = accounts
 
     override fun getAccountsFlow(): Flow<List<LegacyAccountDto>> {
         TODO("Not yet implemented")
@@ -32,7 +31,7 @@ internal class FakeLegacyAccountDtoManager(
     }
 
     override fun moveAccount(account: LegacyAccountDto, newPosition: Int) {
-        TODO("Not yet implemented")
+        movedAccounts.add(account.uuid to newPosition)
     }
 
     override fun addOnAccountsChangeListener(accountsChangeListener: AccountsChangeListener) {

@@ -7,6 +7,7 @@ import net.thunderbird.feature.navigation.drawer.dropdown.domain.usecase.GetDisp
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.usecase.GetDisplayFoldersForAccount
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.usecase.GetDisplayTreeFolder
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.usecase.GetDrawerConfig
+import net.thunderbird.feature.navigation.drawer.dropdown.domain.usecase.MoveAccount
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.usecase.SaveDrawerConfig
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.usecase.SyncAccount
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.usecase.SyncAllAccounts
@@ -71,6 +72,12 @@ val navigationDropDownDrawerModule: Module = module {
         )
     }
 
+    single<UseCase.MoveAccount> {
+        MoveAccount(
+            accountManager = get(),
+        )
+    }
+
     viewModel {
         DrawerViewModel(
             getDrawerConfig = get(),
@@ -79,6 +86,7 @@ val navigationDropDownDrawerModule: Module = module {
             getDisplayTreeFolder = get(),
             syncAccount = get(),
             syncAllAccounts = get(),
+            moveAccount = get(),
         )
     }
 }
