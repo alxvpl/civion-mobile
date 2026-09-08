@@ -118,7 +118,7 @@ try {
         'legacy/ui/legacy/build.gradle.kts' =
             'Dependency on feature:civion:navigation, which holds the last-used account and folder.'
         'legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt' =
-            'Records the account and folder on screen, and reopens an account at the folder it was left in. initializeFromLocalSearch and openRealAccount are the only places every navigation path passes through.'
+            'Records the account and folder on screen, and reopens an account at the folder it was left in; initializeFromLocalSearch and openRealAccount are the only places every navigation path passes through. Also makes Back leave the account last, returning to its Inbox before the unified inbox.'
         'legacy/common/src/main/java/com/fsck/k9/notification/K9NotificationActionCreator.kt' =
             'A notification opens the account it belongs to instead of the unified inbox, so Back returns to that account.'
         'legacy/common/src/main/java/com/fsck/k9/notification/KoinModule.kt' =
