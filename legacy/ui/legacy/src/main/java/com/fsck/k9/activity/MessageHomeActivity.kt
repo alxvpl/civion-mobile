@@ -31,6 +31,7 @@ import app.k9mail.core.ui.compose.common.window.FoldableStateObserver
 import app.k9mail.core.ui.legacy.designsystem.atom.icon.Icons
 import app.k9mail.feature.launcher.FeatureLauncherActivity
 import app.k9mail.feature.launcher.FeatureLauncherTarget
+import app.k9mail.legacy.mailstore.FolderRepository
 import app.k9mail.legacy.message.controller.MessageReference
 import com.fsck.k9.CoreResourceProvider
 import com.fsck.k9.K9.fontSizes
@@ -78,6 +79,7 @@ import net.thunderbird.feature.search.legacy.api.SearchAttribute
 import net.thunderbird.feature.search.legacy.api.SearchCondition
 import net.thunderbird.feature.search.legacy.serialization.LocalMessageSearchSerializer
 import net.thunderbird.legacy.logging.Log
+import nl.civion.mobile.navigation.CivionNavigationState
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -110,6 +112,7 @@ open class MessageHomeActivity :
     private val preferences: Preferences by inject()
     private val accountManager: LegacyAccountDtoManager by inject()
     private val defaultFolderProvider: DefaultFolderProvider by inject()
+    private val folderRepository: FolderRepository by inject()
     private val generalSettingsManager: GeneralSettingsManager by inject()
     private val messagingController: MessagingController by inject()
     private val contactRepository: ContactRepository by inject()
@@ -759,7 +762,7 @@ open class MessageHomeActivity :
             openUnifiedFolders()
         } else {
             val account = accountManager.getAccount(accountId) ?: return
-            val folderId = defaultFolderProvider.getDefaultFolder(account)
+            val folderId = lastUsedFolder(account) ?: defaultFolderProvider.getDefaultFolder(account)
 
             val search = LocalMessageSearch()
             search.addAllowedFolder(folderId)
@@ -1432,7 +1435,45 @@ open class MessageHomeActivity :
         account = search.resolveAccount(currentAccount = account, accountManager = accountManager)
         singleFolderMode = !search.searchAllAccounts() && folderIds.size == 1
 
+        rememberNavigationState(folderIds)
         configureDrawer()
+    }
+
+    /**
+     * Records the account and folder now on screen, so a later start can return to them.
+     *
+     * Every path that puts one account's folder on screen ends up here — the drawer, a shortcut,
+     * a notification, a restored fragment — which is why the recording sits here rather than in
+     * each of them.
+     *
+     * Only a single account's single folder is recorded. The unified inbox and search results
+     * span accounts, and the account [search] resolves to in those cases is a fallback rather
+     * than a place the user chose to be; recording it would make the next start open an account
+     * the user never selected.
+     */
+    private fun rememberNavigationState(folderIds: List<Long>) {
+        if (!singleFolderMode) return
+        val accountUuid = account?.uuid ?: return
+        val folderId = folderIds.firstOrNull() ?: return
+
+        CivionNavigationState.recordActiveAccount(this, accountUuid, folderId)
+    }
+
+    /**
+     * The folder [account] was last left in, when switching to it inside a running application.
+     *
+     * Returns `null` when nothing was recorded, or when the recorded folder no longer exists —
+     * renamed on the server, unsubscribed or deleted between two runs — so the caller falls back
+     * to the account's default folder instead of opening a list that can never have messages.
+     *
+     * This is not consulted on a cold start: [MessageHomeActivity] is then entered through a
+     * shortcut intent that resolves the folder with [DefaultFolderProvider], which is what makes
+     * a normal start land in the Inbox regardless of where the account was last left.
+     */
+    private fun lastUsedFolder(account: LegacyAccountDto): Long? {
+        val folderId = CivionNavigationState.lastFolderId(this, account.uuid) ?: return null
+
+        return folderId.takeIf { folderRepository.isFolderPresent(account.id, it) }
     }
 
     private fun LocalMessageSearch.firstAccount(): LegacyAccountDto? {

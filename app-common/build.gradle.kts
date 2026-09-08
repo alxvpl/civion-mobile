@@ -18,6 +18,8 @@ dependencies {
     api(projects.feature.launcher)
     api(projects.feature.navigation.drawer.api)
 
+    implementation(projects.feature.civion.navigation)
+
     implementation(projects.legacy.core)
     implementation(projects.legacy.ui.base)
     implementation(projects.core.android.account)

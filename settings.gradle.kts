@@ -145,6 +145,10 @@ include(
 )
 
 include(
+    ":feature:civion:navigation",
+)
+
+include(
     ":feature:notification:api",
     ":feature:notification:impl",
     ":feature:notification:testing",

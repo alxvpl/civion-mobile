@@ -28,6 +28,7 @@ dependencies {
     implementation(projects.core.common)
     implementation(projects.feature.navigation.drawer.api)
     implementation(projects.feature.navigation.drawer.dropdown)
+    implementation(projects.feature.civion.navigation)
     implementation(projects.feature.notification.api)
     // TODO: Remove AccountOauth dependency
     implementation(projects.feature.account.oauth)
