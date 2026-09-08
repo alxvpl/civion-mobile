@@ -13,10 +13,12 @@
       was previously truncated no matter how much empty space the row had. Sender and
       subject are what the row is read for; the subject now gets the room.
 
-    - `account_color_chip` and `status` are aligned to `date` rather than to `subject`.
-      `date` sits on the subject's first baseline and is always one line, so the chip and
-      the reply/forward marker stay on the subject's first line instead of drifting to the
-      middle of a two-line subject.
+    - `account_color_chip`, `status` and `attachment` are aligned to `date` rather than to
+      `subject` or the row's top guideline. `date` sits on the subject's first baseline and
+      is always one line, so the chip, the reply/forward marker and the paperclip stay on
+      the subject's first line instead of drifting to the middle of a two-line subject or
+      hanging above the date it sits next to. The paperclip also gets a little more room
+      from the date, which it was pressed against.
 
   Deliberately not changed: text sizes and text appearances, the preview line count, the
   vertical padding, the contact picture, and the row density. The row grows only when a
@@ -153,9 +155,10 @@
         android:id="@+id/attachment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="4dp"
+        android:layout_marginEnd="6dp"
+        app:layout_constraintBottom_toBottomOf="@+id/date"
         app:layout_constraintEnd_toStartOf="@+id/date"
-        app:layout_constraintTop_toTopOf="@+id/top_guideline"
+        app:layout_constraintTop_toTopOf="@+id/date"
         app:srcCompat="@drawable/ic_attachment"
         />
 
