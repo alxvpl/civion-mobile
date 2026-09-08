@@ -825,23 +825,34 @@ open class MessageHomeActivity :
         } else if (!isSearchViewCollapsed()) {
             collapseSearchView()
         } else if (isDrawerEnabled && account != null && supportFragmentManager.backStackEntryCount == 0) {
-            if (generalSettingsManager.getConfig().display.inboxSettings.isShowUnifiedInbox) {
-                if (search!!.id != SearchAccount.UNIFIED_FOLDERS) {
-                    openUnifiedFolders()
-                } else {
-                    dispatchOnBackPressed(callback)
-                }
-            } else {
-                val defaultFolderId = defaultFolderProvider.getDefaultFolder(account!!)
-                val currentFolder = if (singleFolderMode) search!!.folderIds[0] else null
-                if (currentFolder == null || defaultFolderId != currentFolder) {
-                    openFolderImmediately(defaultFolderId)
-                } else {
-                    dispatchOnBackPressed(callback)
-                }
-            }
+            handleBackFromMessageList(callback)
         } else {
             dispatchOnBackPressed(callback)
+        }
+    }
+
+    /**
+     * Back from a message list, with nothing on the fragment back stack.
+     *
+     * The account is left last, not first. A folder of the current account goes back to that
+     * account's default folder — its Inbox — and only from there does Back leave for the unified
+     * inbox, which belongs to no account. Previously any folder went straight to the unified inbox
+     * as soon as that was enabled, so backing out of Sent in one account landed in a combined list
+     * rather than in the Inbox of the account the user was reading.
+     *
+     * From the unified inbox itself Back leaves the screen, as before.
+     */
+    private fun handleBackFromMessageList(callback: OnBackPressedCallback) {
+        val search = this.search!!
+        val defaultFolderId = defaultFolderProvider.getDefaultFolder(account!!)
+        val currentFolderId = if (singleFolderMode) search.folderIds[0] else null
+        val showUnifiedInbox = generalSettingsManager.getConfig().display.inboxSettings.isShowUnifiedInbox
+
+        when {
+            search.id == SearchAccount.UNIFIED_FOLDERS -> dispatchOnBackPressed(callback)
+            currentFolderId != defaultFolderId -> openFolderImmediately(defaultFolderId)
+            showUnifiedInbox -> openUnifiedFolders()
+            else -> dispatchOnBackPressed(callback)
         }
     }
 
