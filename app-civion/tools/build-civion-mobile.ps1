@@ -10,7 +10,8 @@
       - the commit it was built from is recorded in the file name and in
         BUILD-INFO.txt, and an uncommitted working tree is refused by default;
       - the engine footprint required by civion-android-mail-edge-decision-r002
-        section 3.2 is re-measured, and the build fails if an engine file changed;
+        section 3.2 is re-measured, and the build fails if an engine file changed
+        that is not one of the recorded hooks in $EngineHooks;
       - a SHA-256 is written next to the APK and appended to an append-only ledger.
 
     Examples:
@@ -104,6 +105,60 @@ try {
 
     # ------------------------------------------------------ engine footprint ---
 
+    # The recorded hooks: upstream files CIVION is allowed to have changed, each with the
+    # reason it could not be done anywhere cheaper. Decision r002 section 3.2 puts a hook in
+    # an upstream file last in the order of preference — after composition, resource override,
+    # Koin override and a CIVION-owned module — precisely because each line here is paid for
+    # again at every upstream merge. The list is the record of that payment, and anything not
+    # on it still fails the build.
+    #
+    # Before adding an entry, exhaust the cheaper layers. Before keeping one, ask whether it
+    # can be offered upstream instead, at which point it stops being a fork cost.
+    $EngineHooks = [ordered]@{
+        'legacy/ui/legacy/build.gradle.kts' =
+            'Dependency on feature:civion:navigation, which holds the last-used account and folder.'
+        'legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt' =
+            'Records the account and folder on screen, and reopens an account at the folder it was left in. initializeFromLocalSearch and openRealAccount are the only places every navigation path passes through.'
+        'legacy/common/src/main/java/com/fsck/k9/notification/K9NotificationActionCreator.kt' =
+            'A notification opens the account it belongs to instead of the unified inbox, so Back returns to that account.'
+        'legacy/common/src/main/java/com/fsck/k9/notification/KoinModule.kt' =
+            'Follows the constructor change above.'
+        'feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/domain/DomainContract.kt' =
+            'MoveAccount use case contract for drag-and-drop account ordering.'
+        'feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/domain/usecase/MoveAccount.kt' =
+            'Stores the dragged order through the account manager, which already owns account order.'
+        'feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/account/AccountList.kt' =
+            'Long-press drag and drop. The drawer is instantiated directly by MessageHomeActivity, not through Koin, so a CIVION drawer cannot be substituted.'
+        'feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerContent.kt' =
+            'Passes the reorder callback through.'
+        'feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerContract.kt' =
+            'OnAccountMove event.'
+        'feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerViewModel.kt' =
+            'Handles OnAccountMove.'
+        'feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/NavigationDrawerModule.kt' =
+            'Binds MoveAccount.'
+        'feature/navigation/drawer/dropdown/src/debug/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/account/AccountListPreview.kt' =
+            'Follows the AccountList signature.'
+        'feature/navigation/drawer/dropdown/src/test/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerViewModelTest.kt' =
+            'Follows the DrawerViewModel constructor.'
+        'feature/navigation/drawer/dropdown/src/test/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/domain/usecase/FakeLegacyAccountDtoManager.kt' =
+            'Implements getAccounts and moveAccount for MoveAccountTest.'
+        'feature/navigation/drawer/dropdown/src/test/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/domain/usecase/MoveAccountTest.kt' =
+            'Covers MoveAccount.'
+        'feature/account/setup/build.gradle.kts' =
+            'Dependencies needed to read the existing accounts during setup.'
+        'feature/account/setup/src/main/kotlin/app/k9mail/feature/account/setup/domain/usecase/ValidateEmailAddress.kt' =
+            'One email address, one account: refuses an address already set up, at the first step of setup.'
+        'feature/account/setup/src/main/kotlin/app/k9mail/feature/account/setup/ui/autodiscovery/AutoDiscoveryStringMapper.kt' =
+            'Message for the new validation error. The mapper throws on an error type it does not know, so it cannot be extended from outside.'
+        'feature/account/setup/src/main/kotlin/app/k9mail/feature/account/setup/AccountSetupModule.kt' =
+            'Supplies the existing addresses to the validator. AccountAutoDiscoveryValidator is internal, so its construction cannot be overridden from app-civion.'
+        'feature/account/setup/src/main/res/values/strings.xml' =
+            'The message itself.'
+        'feature/account/setup/src/test/kotlin/app/k9mail/feature/account/setup/domain/usecase/ValidateEmailAddressTest.kt' =
+            'Covers the duplicate cases.'
+    }
+
     # Is this commit published? A clean tree is not the same as a published one:
     # an artifact built from a local-only commit cannot be reproduced by anyone else.
     $published = "unknown"
@@ -121,6 +176,7 @@ try {
     if ($LASTEXITCODE -ne 0) { $baseKnown = $false }
 
     $engineChanged = @()
+    $engineUnrecorded = @()
     if (-not $baseKnown) {
         Write-Output "Upstream base is not present in this checkout; footprint not measured."
         Write-Output "Fetch the full history to enforce it (actions/checkout with fetch-depth: 0)."
@@ -133,15 +189,28 @@ try {
         $appCommon     = @($changed | Where-Object { $_ -match '^app-common/' })
         $civionFiles   = @($changed | Where-Object { $_ -match '^app-civion/' -or $_ -match $civionRx })
 
+        $engineUnrecorded = @($engineChanged | Where-Object { -not $EngineHooks.Contains($_) })
+
         Write-Output ("changed files    : {0}" -f $changed.Count)
         Write-Output ("CIVION files     : {0}" -f $civionFiles.Count)
         Write-Output ("app-common files : {0}" -f $appCommon.Count)
-        Write-Output ("engine files     : {0}   (decision r002 section 3.2 requires 0)" -f $engineChanged.Count)
+        Write-Output ("engine files     : {0}   ({1} recorded hooks, {2} unrecorded; decision r002 section 3.2 requires 0 unrecorded)" -f `
+                $engineChanged.Count, ($engineChanged.Count - $engineUnrecorded.Count), $engineUnrecorded.Count)
 
         if ($engineChanged.Count -ne 0) {
             Write-Output ""
-            $engineChanged | ForEach-Object { Write-Output "  $_" }
-            throw "Engine files changed. The accepted architecture requires 0; the decision returns for revision rather than being patched around."
+            Write-Output "recorded hooks:"
+            $engineChanged | Where-Object { $EngineHooks.Contains($_) } | ForEach-Object {
+                Write-Output "  $_"
+                Write-Output "      $($EngineHooks[$_])"
+            }
+        }
+
+        if ($engineUnrecorded.Count -ne 0) {
+            Write-Output ""
+            Write-Output "unrecorded engine files:"
+            $engineUnrecorded | ForEach-Object { Write-Output "  $_" }
+            throw "Engine files changed that are not recorded hooks. Either move the change to composition, a resource override, a Koin override or a CIVION module, or add it to `$EngineHooks with the reason it cannot live anywhere cheaper. Do not widen the list to make a build pass."
         }
     }
 
@@ -289,7 +358,7 @@ try {
         "commit   : $commit"
         "branch   : $branch"
         "tree     : $(if ($isDirty) { 'DIRTY — not reproducible from the repository' } else { 'clean' })"
-        "engine   : $($engineChanged.Count) engine files changed vs $upstreamBase"
+        "engine   : $($engineChanged.Count) engine files changed vs $upstreamBase ($($engineChanged.Count - $engineUnrecorded.Count) recorded hooks, $($engineUnrecorded.Count) unrecorded)"
         "published: $published"
         "built    : $built"
         "builder  : $(if ($isCi) { 'github actions, self-hosted runner' } else { 'manual' })"
@@ -327,7 +396,7 @@ try {
             "|---|---|"
             "| commit | ``$commit`` |"
             "| branch | ``$branch`` |"
-            "| engine files changed | $($engineChanged.Count) |"
+            "| engine files changed | $($engineChanged.Count), all recorded hooks |"
             "| published | $published |"
             "| size | $($apk.Length) bytes |"
             "| sha-256 | ``$sha256`` |"
