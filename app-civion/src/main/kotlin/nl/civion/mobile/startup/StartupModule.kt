@@ -11,13 +11,13 @@ import org.koin.dsl.override
  * The upstream router is constructed here rather than resolved, because resolving
  * `StartupRouter` from inside its own replacement would resolve the replacement.
  *
- * Include this module *after* the upstream one, so the binding being overridden already exists.
+ * Include this module *after* the upstream one, so the binding being overridden already exists,
+ * and after `civionAdapterModule`, which supplies the accounts contract.
  */
 internal val civionStartupRouterOverrideModule = module {
     single<StartupRouter> {
         CivionStartupRouter(
-            accountManager = get(),
-            accountRemover = get(),
+            accounts = get(),
             upstream = DefaultStartupRouter(get(), get()),
         )
     }.override()

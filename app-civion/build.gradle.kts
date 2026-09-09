@@ -267,6 +267,8 @@ dependencies {
     implementation(projects.core.common)
     implementation(projects.core.featureflag)
 
+    implementation(projects.feature.civion.adapter)
+    implementation(projects.feature.civion.core)
     implementation(projects.feature.civion.navigation)
 
     implementation(projects.feature.autodiscovery.api)

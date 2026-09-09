@@ -7,6 +7,7 @@ import com.fsck.k9.activity.MessageCompose
 import net.thunderbird.app.common.appCommonModule
 import net.thunderbird.core.common.oauth.OAuthConfigurationFactory
 import net.thunderbird.core.common.oauth.OAuthConfigurationProvider
+import nl.civion.mobile.adapter.civionAdapterModule
 import nl.civion.mobile.auth.CivionOAuthConfigurationFactory
 import nl.civion.mobile.auth.CivionOAuthConfigurationProvider
 import nl.civion.mobile.dev.developmentModuleAdditions
@@ -39,6 +40,10 @@ val appModule = module {
     includes(widgetModule)
     includes(featureModule)
     includes(providerModule)
+
+    // The Thunderbird adapter: CIVION contracts bound to the engine. Before the modules that
+    // consume them, and before the overrides below, which do.
+    includes(civionAdapterModule)
 
     single(named("ClientInfoAppName")) { BuildConfig.CLIENT_INFO_APP_NAME }
     single(named("ClientInfoAppVersion")) { BuildConfig.VERSION_NAME }

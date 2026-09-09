@@ -3,8 +3,8 @@ package nl.civion.mobile.startup
 import android.app.Activity
 import com.fsck.k9.activity.MessageHomeActivity
 import net.thunderbird.app.common.startup.StartupRouter
-import net.thunderbird.core.android.account.LegacyAccountManager
-import net.thunderbird.feature.account.settings.api.BackgroundAccountRemover
+import nl.civion.mobile.core.account.CivionAccounts
+import nl.civion.mobile.core.account.usable
 import nl.civion.mobile.navigation.CivionNavigationState
 
 /**
@@ -14,12 +14,17 @@ import nl.civion.mobile.navigation.CivionNavigationState
  * `app-common`, which is built into K-9 and Thunderbird as well as CIVION Mobile. The
  * previous implementation of this behaviour patched `DefaultStartupRouter` directly; that
  * change was invisible to the engine-footprint guard, because `app-common` sits outside the
- * paths it measures. Binding here keeps the behaviour and removes the divergence.
+ * paths it measured. Binding here keeps the behaviour and removes the divergence.
  *
  * The override is deliberately narrow. CIVION decides exactly one thing — *which* account a
  * start lands in — and only when there is a usable recorded one. Everything else is
  * [upstream]'s: onboarding on a first run, the fallback when nothing is recorded, and whatever
  * upstream may add to a start later.
+ *
+ * Accounts are reached through [CivionAccounts] rather than through the engine's account
+ * manager, so no upstream account type appears here. [MessageHomeActivity] does appear: it is
+ * the screen being opened, and until CIVION owns that screen, launching it is what starting
+ * the application means.
  *
  * Where inside the account the start lands is not decided here. [MessageHomeActivity] opens an
  * account at its default folder, so a cold start reaches the Inbox even when the account was
@@ -27,18 +32,15 @@ import nl.civion.mobile.navigation.CivionNavigationState
  * switching accounts inside a running application.
  */
 internal class CivionStartupRouter(
-    private val accountManager: LegacyAccountManager,
-    private val accountRemover: BackgroundAccountRemover,
+    private val accounts: CivionAccounts,
     private val upstream: StartupRouter,
     private val recordedAccountUuid: (Activity) -> String? = CivionNavigationState::lastActiveAccountUuid,
 ) : StartupRouter {
 
     override fun routeToNextScreen(activity: Activity) {
-        val accounts = accountManager.getAccounts()
-
         val target = selectStartupAccount(
             recordedAccountUuid = recordedAccountUuid(activity),
-            usableAccountUuids = accounts.filter { it.isFinishedSetup }.map { it.uuid }.toSet(),
+            usableAccountUuids = accounts.usable().map { it.uuid }.toSet(),
         )
 
         if (target == null) {
@@ -50,15 +52,9 @@ internal class CivionStartupRouter(
         // over, upstream never runs, so that one side effect is reproduced here. Doing it after
         // the decision rather than before is safe and avoids removing twice: an account that is
         // not finished can never be selected, so the removal cannot change the outcome.
-        removeIncompleteAccounts()
+        accounts.removeUnfinished()
 
         MessageHomeActivity.launch(activity, target)
-    }
-
-    private fun removeIncompleteAccounts() {
-        accountManager.getAccounts()
-            .filterNot { it.isFinishedSetup }
-            .forEach { accountRemover.removeAccountAsync(it.uuid) }
     }
 }
 

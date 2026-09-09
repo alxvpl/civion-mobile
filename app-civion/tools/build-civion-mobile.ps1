@@ -254,6 +254,54 @@ try {
         }
     }
 
+    # -------------------------------------------------------- adapter boundary ---
+
+    # Thunderbird upstream -> one adapter -> CIVION's own layers.
+    #
+    # The footprint above measures what CIVION changed in upstream. This measures the opposite
+    # direction: how far upstream types have travelled into CIVION. Only feature\civion\adapter
+    # may name one. Everything else CIVION owns — UI, storage, navigation and, later,
+    # intelligence — speaks feature\civion\core's types, so an upstream rename or a moved class
+    # stops at the adapter instead of being a change in every consumer.
+    #
+    # app-civion is not scanned: it is the composition layer, and wiring Koin bindings and
+    # launching upstream activities is exactly what it is for.
+
+    Write-Section "Adapter boundary"
+
+    $upstreamImportRx = '^\s*import\s+(com\.fsck\.k9|net\.thunderbird|app\.k9mail)\.'
+    $boundaryViolations = @()
+
+    foreach ($module in (Get-ChildItem (Join-Path $repositoryRoot "feature\civion") -Directory)) {
+        if ($module.Name -eq "adapter") { continue }
+
+        # core is a plain JVM module and holds the contracts; it may not reach Android either,
+        # or the contracts stop being testable without a device.
+        $forbidden = if ($module.Name -eq "core") { $upstreamImportRx, '^\s*import\s+android(x)?\.' } else { , $upstreamImportRx }
+
+        $sources = @(Get-ChildItem (Join-Path $module.FullName "src") -Recurse -File -Include *.kt -ErrorAction SilentlyContinue)
+        foreach ($source in $sources) {
+            $lines = Get-Content $source.FullName
+            for ($i = 0; $i -lt $lines.Count; $i++) {
+                foreach ($rx in $forbidden) {
+                    if ($lines[$i] -match $rx) {
+                        $relative = $source.FullName.Substring($repositoryRoot.Length + 1)
+                        $boundaryViolations += "{0}:{1}: {2}" -f $relative, ($i + 1), $lines[$i].Trim()
+                    }
+                }
+            }
+        }
+    }
+
+    Write-Output ("modules checked    : {0}" -f (@(Get-ChildItem (Join-Path $repositoryRoot "feature\civion") -Directory) | Where-Object { $_.Name -ne "adapter" }).Count)
+    Write-Output ("violations         : {0}" -f $boundaryViolations.Count)
+
+    if ($boundaryViolations.Count -ne 0) {
+        Write-Output ""
+        $boundaryViolations | ForEach-Object { Write-Output "  $_" }
+        throw "Thunderbird types reached a CIVION module other than the adapter. Put the upstream call in feature\civion\adapter and hand the result on as a feature\civion\core type. Widening this check defeats the boundary it exists to hold."
+    }
+
     # ------------------------------------------------------------------ build ---
 
     # Build number. Artifacts are named CIVION-Mobile-<base version>.<n>.apk, with n

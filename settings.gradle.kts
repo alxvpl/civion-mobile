@@ -145,6 +145,8 @@ include(
 )
 
 include(
+    ":feature:civion:adapter",
+    ":feature:civion:core",
     ":feature:civion:navigation",
 )
 
