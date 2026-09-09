@@ -27,12 +27,21 @@ jobs:
 
       - name: Build
         shell: powershell
+        env:
+          # Same mechanism as the CIVION Mobile build: the output location is a
+          # repository variable, never a path committed to the source. Unset means
+          # a repository-relative out\.
+          CIVION_OUT_DIR: ${{ vars.CIVION_OUT_DIR }}
         run: |
           $env:JAVA_HOME = "F:\Android\jdk-21"
           $env:ANDROID_HOME = "F:\Android\Sdk"
           $env:ANDROID_SDK_ROOT = "F:\Android\Sdk"
           $env:Path = "$env:JAVA_HOME\bin;$env:Path"
-          $log = "F:\civion-builds\gradle-thunderbird-reference.log"
+          $outDir = if ($env:CIVION_OUT_DIR) { $env:CIVION_OUT_DIR } else { "out" }
+          if (-not [System.IO.Path]::IsPathRooted($outDir)) { $outDir = Join-Path $PWD $outDir }
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+          $outDir = (Resolve-Path $outDir).Path
+          $log = Join-Path $outDir "gradle-thunderbird-reference.log"
           $cmd = '"{0}" :app-thunderbird:assembleFossDebug --no-daemon --no-watch-fs > "{1}" 2>&1' -f (Join-Path $PWD "gradlew.bat"), $log
           & cmd.exe /d /c $cmd
           if ($LASTEXITCODE -ne 0) {
@@ -41,6 +50,7 @@ jobs:
           }
           $apk = Get-ChildItem -Path "app-thunderbird\build\outputs\apk" -Filter *.apk -Recurse -File | Select-Object -First 1
           if (-not $apk) { Write-Error "No APK produced"; exit 1 }
-          Copy-Item $apk.FullName "F:\civion-builds\Thunderbird-upstream-reference.apk" -Force
-          Write-Output "APK: F:\civion-builds\Thunderbird-upstream-reference.apk"
-          (Get-FileHash -Algorithm SHA256 "F:\civion-builds\Thunderbird-upstream-reference.apk").Hash
+          $target = Join-Path $outDir "Thunderbird-upstream-reference.apk"
+          Copy-Item $apk.FullName $target -Force
+          Write-Output "APK: $target"
+          (Get-FileHash -Algorithm SHA256 $target).Hash

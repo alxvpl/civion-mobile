@@ -26,7 +26,8 @@ param(
 
     [string] $Version = "0.1.0-alpha",
 
-    # Where the APK, its hash, BUILD-INFO.txt and the ledger are written.
+    # Where the APK, its hash, BUILD-INFO.txt and the ledger are written. Falls back
+    # to the CIVION_OUT_DIR environment variable, then to a repository-relative out\.
     [string] $OutDir,
 
     [string] $JavaHome,
@@ -74,10 +75,18 @@ $env:ANDROID_HOME     = $AndroidSdk
 $env:ANDROID_SDK_ROOT = $AndroidSdk
 $env:Path             = "$JavaHome\bin;$env:Path"
 
+# Where build output goes is configuration, not source. An absolute workspace path
+# committed here means every relocation of the workspace costs a commit, and the
+# path is wrong for anyone else who runs the script. Precedence: -OutDir, then the
+# CIVION_OUT_DIR environment variable, then a repository-relative out\. A relative
+# value resolves against the repository root, so the result never depends on the
+# caller's current directory.
 if (-not $OutDir) {
-    if ($isCi) { $OutDir = Join-Path $repositoryRoot "out" } else { $OutDir = "F:\civion-builds" }
+    if ($env:CIVION_OUT_DIR) { $OutDir = $env:CIVION_OUT_DIR } else { $OutDir = "out" }
 }
+if (-not [System.IO.Path]::IsPathRooted($OutDir)) { $OutDir = Join-Path $repositoryRoot $OutDir }
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+$OutDir = (Resolve-Path $OutDir).Path
 
 # -------------------------------------------------------- commit identity ---
 

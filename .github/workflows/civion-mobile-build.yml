@@ -55,25 +55,29 @@ jobs:
           # construction — the client is bound to package name and signing certificate.
           CIVION_OAUTH_CLIENT_ID_DEBUG: ${{ vars.CIVION_OAUTH_CLIENT_ID_DEBUG }}
           CIVION_DEBUG_KEYSTORE: ${{ vars.CIVION_DEBUG_KEYSTORE }}
+          # Where artifacts land on this machine. A repository variable, not a path
+          # written into the source: the workspace can move without a commit. Unset
+          # means the script writes to a repository-relative out\.
+          CIVION_OUT_DIR: ${{ vars.CIVION_OUT_DIR }}
         # The runner service executes under NETWORK SERVICE. Use a process-scoped
         # bypass so the trusted repository script can run regardless of that
         # service account's PowerShell execution policy; machine policy is unchanged.
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           .\app-civion\tools\build-civion-mobile.ps1 `
-            -Variant "${{ inputs.variant || 'debug' }}" `
-            -OutDir "F:\civion-builds"
+            -Variant "${{ inputs.variant || 'debug' }}"
 
-      # Every build, CI or manual, lands in F:\civion-builds on this machine. The
-      # workflow artifact is a copy for anyone without access to the machine.
+      # Every build, CI or manual, lands in the directory the script resolved and
+      # reported as its `outdir` output. The workflow artifact is a copy for anyone
+      # without access to the machine.
       - name: Upload APK, hash and build info
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: civion-mobile-${{ github.sha }}
           path: |
-            F:\civion-builds\${{ steps.build.outputs.artifact }}
-            F:\civion-builds\${{ steps.build.outputs.info }}
-            F:\civion-builds\${{ steps.build.outputs.log }}
+            ${{ steps.build.outputs.outdir }}\${{ steps.build.outputs.artifact }}
+            ${{ steps.build.outputs.outdir }}\${{ steps.build.outputs.info }}
+            ${{ steps.build.outputs.outdir }}\${{ steps.build.outputs.log }}
           retention-days: 30
           if-no-files-found: error
