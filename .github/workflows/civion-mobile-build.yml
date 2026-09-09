@@ -57,7 +57,11 @@ jobs:
       # behaviour, and spending four minutes assembling an APK to be told so afterwards
       # helps nobody.
       - name: Acceptance (FAST tier)
-        shell: powershell
+        # Same process-scoped bypass as the build steps, and for the same reason: the
+        # runner service executes under NETWORK SERVICE, whose execution policy would
+        # otherwise refuse the generated script outright - a step that fails in under a
+        # second, before anything it was meant to check has run.
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           $env:JAVA_HOME = "F:\Android\jdk-21"
           $env:ANDROID_HOME = "F:\Android\Sdk"
