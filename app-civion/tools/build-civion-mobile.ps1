@@ -1,4 +1,4 @@
-<#
+﻿<#
     CIVION Mobile — the single build procedure.
 
     One script, two callers: run it by hand on the owner's machine, or let the
@@ -250,7 +250,7 @@ try {
             Write-Output ""
             Write-Output "unrecorded upstream files:"
             $engineUnrecorded | ForEach-Object { Write-Output "  $_" }
-            throw "Upstream files changed that are not recorded. Either move the change to composition, a resource override, a Koin override or a CIVION module, or add it to `$EngineHooks with the reason it cannot live anywhere cheaper — or to `$IntegrationPoints if it is a repo-level integration point rather than an engine change. Do not widen either list to make a build pass."
+            throw "Upstream files changed that are not recorded. Either move the change to composition, a resource override, a Koin override or a CIVION module, or add it to `$EngineHooks with the reason it cannot live anywhere cheaper, or to `$IntegrationPoints if it is a repo-level integration point rather than an engine change. Do not widen either list to make a build pass."
         }
     }
 
