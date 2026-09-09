@@ -145,6 +145,7 @@ include(
 )
 
 include(
+    ":feature:civion:acceptance",
     ":feature:civion:adapter",
     ":feature:civion:core",
     ":feature:civion:integration:impl",

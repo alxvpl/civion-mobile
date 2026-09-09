@@ -48,6 +48,35 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The FAST tier of the acceptance contract: everything that can be checked in
+      # minutes without a mail server, a device or a person. The rest of that tier is
+      # the artifact gates, which run inside the build steps below because they need
+      # the built APK.
+      #
+      # Ahead of the build on purpose. A failure here is a failure of the product's
+      # behaviour, and spending four minutes assembling an APK to be told so afterwards
+      # helps nobody.
+      - name: Acceptance (FAST tier)
+        shell: powershell
+        run: |
+          $env:JAVA_HOME = "F:\Android\jdk-21"
+          $env:ANDROID_HOME = "F:\Android\Sdk"
+          $env:ANDROID_SDK_ROOT = "F:\Android\Sdk"
+          $env:Path = "$env:JAVA_HOME\bin;$env:Path"
+          $tasks = @(
+            ":feature:civion:acceptance:test"
+            ":feature:civion:core:test"
+            ":feature:civion:adapter:testDebugUnitTest"
+            ":feature:civion:navigation:testDebugUnitTest"
+            ":feature:civion:integration:impl:testDebugUnitTest"
+            ":feature:civion:integration:noop:testDebugUnitTest"
+            ":app-civion:testStandaloneDebugUnitTest"
+            ":app-civion:testIntegratedDebugUnitTest"
+          ) -join " "
+          $cmd = '"{0}" {1} --no-daemon --no-watch-fs' -f (Join-Path $PWD "gradlew.bat"), $tasks
+          & cmd.exe /d /c $cmd
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Build
         id: build
         env:

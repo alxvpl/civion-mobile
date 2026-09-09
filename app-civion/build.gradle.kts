@@ -365,6 +365,7 @@ dependencies {
 
     implementation(libs.androidx.work.runtime)
 
+    testImplementation(projects.feature.civion.acceptance)
     testImplementation(libs.mockito.kotlin)
 
     debugImplementation(projects.backend.demo)
