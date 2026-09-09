@@ -65,7 +65,29 @@ jobs:
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           .\app-civion\tools\build-civion-mobile.ps1 `
-            -Variant "${{ inputs.variant || 'debug' }}"
+            -Variant "${{ inputs.variant || 'debug' }}" `
+            -Edition standalone
+
+      # The integrated edition is built too, and its own gate checked, because the
+      # separation is only proven when both sides are: a standalone artifact free of
+      # integration code says nothing if the integrated one has none either. The extra
+      # cost is small - the two editions differ by one module, and everything else is
+      # already built and up to date by the time this runs.
+      #
+      # Its APK is deliberately not uploaded. There is no CIVION Core protocol yet, so
+      # it is build evidence rather than something anyone should install.
+      - name: Build (integrated edition, boundary check only)
+        id: build-integrated
+        env:
+          CIVION_OAUTH_CLIENT_ID_DEBUG: ${{ vars.CIVION_OAUTH_CLIENT_ID_DEBUG }}
+          CIVION_DEBUG_KEYSTORE: ${{ vars.CIVION_DEBUG_KEYSTORE }}
+          CIVION_OUT_DIR: ${{ vars.CIVION_OUT_DIR }}
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          .\app-civion\tools\build-civion-mobile.ps1 `
+            -Variant "${{ inputs.variant || 'debug' }}" `
+            -Edition integrated `
+            -NoClean
 
       # Every build, CI or manual, lands in the directory the script resolved and
       # reported as its `outdir` output. The workflow artifact is a copy for anyone

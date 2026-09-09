@@ -16,9 +16,31 @@ Third white-label application module of this tree, alongside `app-k9mail` and `a
 Engine modules (`legacy:*`, `mail:*`, `backend:*`, `core:*`, `feature:*`) are not modified by this
 module. The only upstream file touched is `settings.gradle.kts`, to register the module.
 
+## Editions
+
+One product, one application id, two editions, separated by which modules are compiled in:
+
+|   edition    |         integration layer          |              Gradle task              |
+|--------------|------------------------------------|---------------------------------------|
+| `standalone` | `:feature:civion:integration:noop` | `:app-civion:assembleStandaloneDebug` |
+| `integrated` | `:feature:civion:integration:impl` | `:app-civion:assembleIntegratedDebug` |
+
+Both carry `nl.civion.mobile` and the same signing identity, so the integrated edition installs
+over the standalone one as an upgrade and the Google OAuth client — bound to one package name and
+one certificate — keeps working for both. There is deliberately no `applicationIdSuffix`: an id
+that differed per edition would be a different application to Android, to Google and to the user's
+data.
+
+The separation is a compile-time dependency boundary, not a runtime flag, a Koin binding or
+anything the shrinker does. The build script proves it against the built artifact: the dex must
+carry that edition's marker package and none of the other one's.
+
+`versionCode` is the number of commits reachable from `HEAD` — the same for a given commit
+whoever builds it, and ordered, which matters because both editions share one application id.
+
 Build:
 
-        ./gradlew :app-civion:assembleDebug
+        ./gradlew :app-civion:assembleStandaloneDebug
 
 Release signing is configured from CIVION-owned Gradle properties (`civion.release.*`); see
 `build.gradle.kts`. Upstream `SigningType` is deliberately left untouched.
@@ -58,12 +80,24 @@ On the CIVION development workstation, run:
 
         powershell -ExecutionPolicy Bypass -File app-civion\tools\build-civion-mobile.ps1
 
+Pass `-Edition integrated` for the other edition; `-Variant release` for a release build.
+
 It is the one build procedure; the self-hosted CI runner calls the same script, so a CI artifact
 and a hand-built one are produced the same way. Output goes to `-OutDir`, else `CIVION_OUT_DIR`,
-else a repository-relative `out\`: the APK as `CIVION-Mobile-<version>.<n>.apk`, beside its
-`BUILD-INFO-<n>.txt` (commit, tree state, footprint, publication state, SHA-256), the Gradle log,
-`guard-<n>.txt` and a row in `build-history.csv`.
+else a repository-relative `out\`: the APK as
+`CIVION-Mobile-<version>.<build>-<edition>[-<variant>]-<short sha>.apk`, beside its
+`BUILD-INFO-*.txt` (edition, build number, commit, tree state, footprint, publication state,
+SHA-256), the Gradle log, `guard-*.txt` and a row in `build-history.csv`.
+
+The name is not a counter over what happens to be in the output directory — that made identity a
+property of a directory, so a fresh CI workspace started again at 1 and produced an artifact
+claiming a number an earlier, different build already carried. The build number comes from git
+and the short sha names the commit exactly.
 
 Before it builds, the script re-measures what this fork has changed against the upstream base and
 fails on anything not recorded — see `$EngineHooks` and `$IntegrationPoints` in the script itself.
 The measured perimeter is everything outside `app-civion\` and `feature\civion\`.
+
+It also checks the adapter boundary (no Thunderbird import in a CIVION module other than
+`feature:civion:adapter`), and, after building, that the artifact is the edition it claims and
+that its `versionCode` matches the build number in its name.

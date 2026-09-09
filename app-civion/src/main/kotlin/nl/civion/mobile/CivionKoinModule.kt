@@ -11,6 +11,7 @@ import nl.civion.mobile.adapter.civionAdapterModule
 import nl.civion.mobile.auth.CivionOAuthConfigurationFactory
 import nl.civion.mobile.auth.CivionOAuthConfigurationProvider
 import nl.civion.mobile.dev.developmentModuleAdditions
+import nl.civion.mobile.edition.civionEditionAdditions
 import nl.civion.mobile.feature.featureModule
 import nl.civion.mobile.featureflag.civionFeatureFlagModule
 import nl.civion.mobile.provider.providerModule
@@ -51,6 +52,10 @@ val appModule = module {
     single<OAuthConfigurationFactory> { CivionOAuthConfigurationFactory(context = androidApplication()) }
 
     developmentModuleAdditions()
+
+    // Standalone or CIVION-integrated. Which one is decided by the flavour source set that
+    // supplies this function, not by anything readable here.
+    civionEditionAdditions()
 
     // Must be included last so the upstream definitions have already been registered
     // before these targeted CIVION overrides are loaded.

@@ -147,6 +147,8 @@ include(
 include(
     ":feature:civion:adapter",
     ":feature:civion:core",
+    ":feature:civion:integration:impl",
+    ":feature:civion:integration:noop",
     ":feature:civion:navigation",
 )
 

@@ -15,10 +15,16 @@
         repo-level files CIVION must touch to exist as a module at all. The perimeter
         is everything outside app-civion\ and feature\civion\, so a directory nobody
         thought of cannot fall outside it;
+      - the artifact is checked against the edition it claims: the dex must carry that
+        edition's marker package and none of the other one's, so a standalone build
+        cannot contain CIVION integration code;
+      - the build number in the artifact name and the versionCode inside the APK are
+        computed independently and compared;
       - a SHA-256 is written next to the APK and appended to an append-only ledger.
 
     Examples:
       .\build-civion-mobile.ps1
+      .\build-civion-mobile.ps1 -Edition integrated
       .\build-civion-mobile.ps1 -Variant release -Version 0.2.0-alpha
       .\build-civion-mobile.ps1 -AllowDirty        # marks the artifact +dirty
 #>
@@ -26,6 +32,12 @@
 param(
     [ValidateSet("debug", "release")]
     [string] $Variant = "debug",
+
+    # Which edition to build. Both carry the same application id and signing identity; they
+    # differ in whether the CIVION integration layer was compiled in. The artifact is checked
+    # against its edition after it is built, so a mislabelled one fails rather than ships.
+    [ValidateSet("standalone", "integrated")]
+    [string] $Edition = "standalone",
 
     [string] $Version = "0.1.0-alpha",
 
@@ -270,14 +282,24 @@ try {
     Write-Section "Adapter boundary"
 
     $upstreamImportRx = '^\s*import\s+(com\.fsck\.k9|net\.thunderbird|app\.k9mail)\.'
+    $civionRoot = Join-Path $repositoryRoot "feature\civion"
     $boundaryViolations = @()
 
-    foreach ($module in (Get-ChildItem (Join-Path $repositoryRoot "feature\civion") -Directory)) {
-        if ($module.Name -eq "adapter") { continue }
+    # Modules are found by looking for a src\ directory at any depth, not by listing the
+    # children of feature\civion. Nesting is normal here - :feature:civion:integration:impl and
+    # :noop live one level further down - and a scan that only looked at direct children
+    # reported them as one unscanned "integration" module while quietly checking neither.
+    $modules = @(Get-ChildItem $civionRoot -Recurse -Directory -Filter "src" -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\build\\' } |
+        ForEach-Object { $_.Parent })
+
+    foreach ($module in $modules) {
+        $moduleName = $module.FullName.Substring($civionRoot.Length + 1)
+        if ($moduleName -eq "adapter" -or $moduleName -like "adapter\*") { continue }
 
         # core is a plain JVM module and holds the contracts; it may not reach Android either,
         # or the contracts stop being testable without a device.
-        $forbidden = if ($module.Name -eq "core") { $upstreamImportRx, '^\s*import\s+android(x)?\.' } else { , $upstreamImportRx }
+        $forbidden = if ($moduleName -eq "core") { $upstreamImportRx, '^\s*import\s+android(x)?\.' } else { , $upstreamImportRx }
 
         $sources = @(Get-ChildItem (Join-Path $module.FullName "src") -Recurse -File -Include *.kt -ErrorAction SilentlyContinue)
         foreach ($source in $sources) {
@@ -293,7 +315,9 @@ try {
         }
     }
 
-    Write-Output ("modules checked    : {0}" -f (@(Get-ChildItem (Join-Path $repositoryRoot "feature\civion") -Directory) | Where-Object { $_.Name -ne "adapter" }).Count)
+    $scanned = @($modules | ForEach-Object { $_.FullName.Substring($civionRoot.Length + 1) } |
+        Where-Object { $_ -ne "adapter" -and $_ -notlike "adapter\*" })
+    Write-Output ("modules checked    : {0} ({1})" -f $scanned.Count, ($scanned -join ", "))
     Write-Output ("violations         : {0}" -f $boundaryViolations.Count)
 
     if ($boundaryViolations.Count -ne 0) {
@@ -304,22 +328,37 @@ try {
 
     # ------------------------------------------------------------------ build ---
 
-    # Build number. Artifacts are named CIVION-Mobile-<base version>.<n>.apk, with n
-    # incrementing on every build; the commit stays in BUILD-INFO and in the ledger.
+    # Build identity.
+    #
+    # The number is the commit count reachable from HEAD, so it is the same for a given commit
+    # no matter who builds it or where the output lands. It used to be one more than the highest
+    # numbered APK already sitting in $OutDir, which made identity a property of a directory: a
+    # fresh CI workspace started again at 1 and produced an artifact claiming a number an
+    # earlier, different build already carried.
+    #
+    # Gradle derives the same number for versionCode, and is given this one so the name on the
+    # file and the versionCode inside it cannot disagree. Two editions share one applicationId,
+    # so that versionCode is what orders installs and upgrades between them.
+    #
+    # The commit count alone does not identify a commit - two branches can reach the same count -
+    # so the short sha is part of the artifact name too. Together they order builds and name one
+    # exactly.
     $baseVersion = ($Version -split "-")[0]
-    $lastNumber = 0
-    Get-ChildItem -Path $OutDir -Filter "CIVION-Mobile-$baseVersion.*.apk" -File -ErrorAction SilentlyContinue |
-        ForEach-Object {
-            if ($_.BaseName -match "^CIVION-Mobile-$([regex]::Escape($baseVersion))\.(\d+)$") {
-                $n = [int]$Matches[1]
-                if ($n -gt $lastNumber) { $lastNumber = $n }
-            }
-        }
-    $buildNumber = $lastNumber + 1
-    $suffix = "$baseVersion.$buildNumber"
+    $buildNumber = [int](& git rev-list --count HEAD).Trim()
+    if ($buildNumber -le 0) {
+        throw "Could not establish the build number: 'git rev-list --count HEAD' produced '$buildNumber'. A shallow clone is not enough; fetch the full history."
+    }
+
+    $suffix = "$baseVersion.$buildNumber-$Edition"
+    if ($Variant -ne "debug") { $suffix = "$suffix-$Variant" }
+    $suffix = "$suffix-$short"
     if ($isDirty) { $suffix = "$suffix-dirty" }
-    $logPath   = Join-Path $OutDir ("gradle-{0}-{1}.log" -f $Variant, $suffix)
-    $assemble  = "assemble" + $Variant.Substring(0,1).ToUpper() + $Variant.Substring(1)
+
+    $editionTitle = $Edition.Substring(0,1).ToUpper() + $Edition.Substring(1)
+    $variantTitle = $Variant.Substring(0,1).ToUpper() + $Variant.Substring(1)
+
+    $logPath   = Join-Path $OutDir ("gradle-{0}.log" -f $suffix)
+    $assemble  = "assemble$editionTitle$variantTitle"
     $tasks     = ":app-civion:$assemble"
     if (-not $NoClean) { $tasks = ":app-civion:clean $tasks" }
 
@@ -357,7 +396,7 @@ try {
 
     # Values a machine may need to supply from outside the repository: the CIVION Google
     # OAuth client id, and the shared debug keystore that the registered client is bound to.
-    $extraProperties = @()
+    $extraProperties = @("-Pcivion.build.number=$buildNumber")
     if ($env:CIVION_OAUTH_CLIENT_ID_DEBUG) {
         $extraProperties += "-Pcivion.google.oauth.clientId.debug=$($env:CIVION_OAUTH_CLIENT_ID_DEBUG)"
     }
@@ -379,15 +418,13 @@ try {
 
     # ---------------------------------------------------------------- collect ---
 
-    $apkDir = Join-Path $repositoryRoot "app-civion\build\outputs\apk\$Variant"
+    $apkDir = Join-Path $repositoryRoot "app-civion\build\outputs\apk\$Edition\$Variant"
     $source = Get-ChildItem -Path $apkDir -Filter *.apk -File -ErrorAction SilentlyContinue | Select-Object -First 1
     if (-not $source) { throw "Gradle succeeded but no APK was found under $apkDir" }
 
-    $targetName = if ($Variant -eq "debug") {
-        "CIVION-Mobile-{0}.apk" -f $suffix
-    } else {
-        "CIVION-Mobile-{0}-{1}.apk" -f $suffix, $Variant
-    }
+    # $suffix already carries version, build number, edition, non-debug variant, short sha and
+    # a dirty marker, in that order.
+    $targetName = "CIVION-Mobile-{0}.apk" -f $suffix
     $targetApk  = Join-Path $OutDir $targetName
     Copy-Item -Force $source.FullName $targetApk
 
@@ -397,6 +434,18 @@ try {
 
     $guardLog = Join-Path $OutDir ("guard-{0}.txt" -f $suffix)
     try {
+        # What the compiler actually used for this edition and variant. Both parts of the path
+        # matter: a stale BuildConfig from an earlier build sits beside this one, and matching
+        # on the variant alone would happily read the wrong edition's.
+        $buildConfigFile = (Get-ChildItem -Path (Join-Path $repositoryRoot "app-civion\build\generated\source\buildConfig") `
+                -Filter "BuildConfig.java" -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match "\\$Edition\\$Variant\\" } |
+            Select-Object -First 1)
+        if (-not $buildConfigFile) {
+            throw "Generated BuildConfig for the $Edition $Variant variant was not found; the build identity and OAuth client id cannot be verified."
+        }
+        $buildConfigFile = $buildConfigFile.FullName
+
         # ------------------------------------------------- verify OAuth identity ---
 
         if ($Variant -eq "debug") {
@@ -415,21 +464,72 @@ try {
 
             # The dex entries inside the APK are compressed, so the id cannot be found by
             # scanning its bytes. BuildConfig is what the compiler actually used.
-            $buildConfig = Get-ChildItem -Path (Join-Path $repositoryRoot "app-civion\build\generated\source\buildConfig") `
-                -Filter "BuildConfig.java" -Recurse -File -ErrorAction SilentlyContinue |
-                Where-Object { $_.FullName -match "\\$Variant\\" } |
-                Select-Object -First 1
-            if (-not $buildConfig) {
-                throw "Generated BuildConfig for the $Variant variant was not found; the OAuth client id cannot be verified."
-            }
-            $found = (Select-String -Path $buildConfig.FullName -Pattern ([regex]::Escape($oauthClientId)) -Quiet) -eq $true
+            $found = (Select-String -Path $buildConfigFile -Pattern ([regex]::Escape($oauthClientId)) -Quiet) -eq $true
             if (-not $found) {
-                throw "The OAuth client id is not compiled into the $Variant build. The application would offer no OAuth provider and Gmail would fall back to password authentication."
+                throw "The OAuth client id is not compiled into the $Edition $Variant build. The application would offer no OAuth provider and Gmail would fall back to password authentication."
             }
 
             Write-Output ""
             Write-Output "OAuth identity verified: nl.civion.mobile.debug / $expectedSigningSha1"
         }
+
+        # ------------------------------------------------ verify build identity ---
+
+        # The name on the file and the versionCode inside it are computed twice - here from
+        # git, and by Gradle - so they are compared rather than assumed. Two editions share
+        # one application id, and versionCode is what decides whether one installs over the
+        # other, so an artifact whose name and versionCode disagree is a trap.
+        $versionCodeMatch = [regex]::Match(
+            (Get-Content $buildConfigFile -Raw),
+            'VERSION_CODE\s*=\s*(\d+)')
+        if (-not $versionCodeMatch.Success) {
+            throw "Could not read VERSION_CODE from $buildConfigFile; the build identity cannot be verified."
+        }
+        $actualVersionCode = [int]$versionCodeMatch.Groups[1].Value
+        if ($actualVersionCode -ne $buildNumber) {
+            throw ("Build identity disagrees: the artifact is named for build {0}, but versionCode is {1}. The -Pcivion.build.number handed to Gradle did not reach the build." -f $buildNumber, $actualVersionCode)
+        }
+
+        # ----------------------------------------------------- verify edition ---
+
+        # What actually separates the editions is which code was compiled in, so that is what
+        # is checked - in the built artifact, not in the build files that were meant to produce
+        # it. Runtime flags, Koin bindings and the shrinker are all irrelevant here: the
+        # question is whether the classes are in the dex.
+        #
+        # The check is two-sided on purpose. Asking only whether the integration is absent from
+        # a standalone APK passes just as happily when the tool read nothing at all - a wrong
+        # path, an unreadable dex, a silently failing apkanalyzer. Requiring the edition's own
+        # marker package to be present as well means a vacuous pass is impossible.
+        $editionPackages = @{
+            standalone = @{ present = "nl.civion.mobile.integration.noop"; absent = "nl.civion.mobile.integration.impl" }
+            integrated = @{ present = "nl.civion.mobile.integration.impl"; absent = "nl.civion.mobile.integration.noop" }
+        }
+        $expectPresent = $editionPackages[$Edition].present
+        $expectAbsent  = $editionPackages[$Edition].absent
+
+        $apkanalyzer = Get-ChildItem (Join-Path $AndroidSdk "cmdline-tools") -Filter "apkanalyzer.bat" -Recurse -File -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+        if (-not $apkanalyzer) {
+            throw "apkanalyzer was not found under $AndroidSdk\cmdline-tools. It is what proves the standalone artifact carries no integration code; install the Android SDK command-line tools."
+        }
+
+        $dexPackages = & cmd.exe /d /c "`"$($apkanalyzer.FullName)`" dex packages --defined-only `"$targetApk`" 2>&1"
+        if ($LASTEXITCODE -ne 0) {
+            throw "apkanalyzer could not read $targetName; the edition boundary cannot be verified.`n$($dexPackages -join "`n")"
+        }
+
+        $presentCount = @($dexPackages | Where-Object { $_ -match [regex]::Escape($expectPresent) }).Count
+        $absentCount  = @($dexPackages | Where-Object { $_ -match [regex]::Escape($expectAbsent) }).Count
+
+        if ($presentCount -eq 0) {
+            throw ("The {0} artifact carries nothing from {1}. Either the wrong artifact was inspected or the edition wiring is gone; in both cases the absence check below would have passed for the wrong reason." -f $Edition, $expectPresent)
+        }
+        if ($absentCount -ne 0) {
+            throw ("The {0} artifact contains {1} classes ({2} dex entries). Edition separation is a compile-time dependency boundary; something has made the other edition's code reachable from this one." -f $Edition, $expectAbsent, $absentCount)
+        }
+
+        Write-Output "Edition verified: $Edition carries $expectPresent ($presentCount dex entries) and no $expectAbsent"
 
         "guard: passed" | Set-Content -Path $guardLog -Encoding UTF8
     }
@@ -441,8 +541,10 @@ try {
     $infoPath = Join-Path $OutDir ("BUILD-INFO-{0}.txt" -f $suffix)
     @(
         "artifact : $targetName"
+        "edition  : $Edition (verified against the built dex)"
         "variant  : $Variant"
         "version  : $Version"
+        "build    : $buildNumber (commits reachable from HEAD; also the Android versionCode)"
         "commit   : $commit"
         "branch   : $branch"
         "tree     : $(if ($isDirty) { 'DIRTY — not reproducible from the repository' } else { 'clean' })"
@@ -458,9 +560,9 @@ try {
 
     $ledger = Join-Path $OutDir "build-history.csv"
     if (-not (Test-Path $ledger)) {
-        "timestamp,commit,branch,variant,version,dirty,builder,sha256,artifact" | Set-Content -Path $ledger -Encoding UTF8
+        "timestamp,commit,branch,edition,variant,version,build,dirty,builder,sha256,artifact" | Set-Content -Path $ledger -Encoding UTF8
     }
-    ("{0},{1},{2},{3},{4},{5},{6},{7},{8}" -f $built, $commit, $branch, $Variant, $Version, $isDirty, $(if ($isCi) { "ci" } else { "manual" }), $sha256, $targetName) |
+    ("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}" -f $built, $commit, $branch, $Edition, $Variant, $Version, $buildNumber, $isDirty, $(if ($isCi) { "ci" } else { "manual" }), $sha256, $targetName) |
         Add-Content -Path $ledger -Encoding UTF8
 
     Write-Section "BUILD SUCCESS"
