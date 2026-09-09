@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ReturnCount:CivionOAuthConfigurationFactory.kt:CivionOAuthConfigurationFactory$private fun microsoftConfiguration: Pair&lt;List&lt;String&gt;, OAuthConfiguration&gt;?</ID>
+    <ID>ReturnCount:CivionOAuthConfigurationProvider.kt:CivionOAuthConfigurationProvider$override fun getConfiguration: OAuthConfiguration?</ID>
+  </CurrentIssues>
+</SmellBaseline>

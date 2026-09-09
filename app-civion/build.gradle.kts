@@ -253,6 +253,7 @@ android {
 
 dependencies {
     implementation(projects.appCommon)
+    implementation(projects.core.android.account)
     implementation(projects.core.ui.compose.common)
     implementation(projects.core.ui.legacy.theme2.thunderbird)
     implementation(projects.feature.launcher)
@@ -266,7 +267,10 @@ dependencies {
     implementation(projects.core.common)
     implementation(projects.core.featureflag)
 
+    implementation(projects.feature.civion.navigation)
+
     implementation(projects.feature.autodiscovery.api)
+    implementation(projects.feature.account.settings.api)
     implementation(projects.feature.account.settings.impl)
 
     // No Google Play billing, no donation flow.
@@ -288,6 +292,8 @@ dependencies {
     implementation(projects.feature.widget.unread)
 
     implementation(libs.androidx.work.runtime)
+
+    testImplementation(libs.mockito.kotlin)
 
     debugImplementation(projects.backend.demo)
     debugImplementation(projects.feature.autodiscovery.demo)

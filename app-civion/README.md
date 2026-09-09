@@ -18,7 +18,7 @@ module. The only upstream file touched is `settings.gradle.kts`, to register the
 
 Build:
 
-    ./gradlew :app-civion:assembleDebug
+        ./gradlew :app-civion:assembleDebug
 
 Release signing is configured from CIVION-owned Gradle properties (`civion.release.*`); see
 `build.gradle.kts`. Upstream `SigningType` is deliberately left untouched.
@@ -28,10 +28,10 @@ Release signing is configured from CIVION-owned Gradle properties (`civion.relea
 A Google OAuth client of type *Android* is bound to one package name and one signing certificate, so
 the debug and release application ids need separate registrations:
 
-| variant | application id       | certificate           | property                                |
-|---------|----------------------|-----------------------|-----------------------------------------|
-| debug   | `nl.civion.mobile.debug` | debug keystore    | `civion.google.oauth.clientId.debug`    |
-| release | `nl.civion.mobile`   | CIVION release key    | `civion.google.oauth.clientId.release`  |
+| variant |      application id      |    certificate     |                property                |
+|---------|--------------------------|--------------------|----------------------------------------|
+| debug   | `nl.civion.mobile.debug` | debug keystore     | `civion.google.oauth.clientId.debug`   |
+| release | `nl.civion.mobile`       | CIVION release key | `civion.google.oauth.clientId.release` |
 
 Scope: `https://mail.google.com/` — the only scope that grants IMAP and SMTP (XOAUTH2) access. It is
 a Google *restricted* scope.
@@ -56,8 +56,14 @@ audience and custom-URI settings are service-side configuration and don't requir
 
 On the CIVION development workstation, run:
 
-    powershell -ExecutionPolicy Bypass -File app-civion\tools\build-civion-mobile.ps1
+        powershell -ExecutionPolicy Bypass -File app-civion\tools\build-civion-mobile.ps1
 
-The helper disables Gradle file-system watching (required on the current `F:` workspace), writes
-the full build output to `F:\CIVION-Mobile-build.log`, and copies the resulting debug APK to
-`F:\CIVION-Mobile-0.1.0-alpha.apk` together with a printed size, timestamp, and SHA-256.
+It is the one build procedure; the self-hosted CI runner calls the same script, so a CI artifact
+and a hand-built one are produced the same way. Output goes to `-OutDir`, else `CIVION_OUT_DIR`,
+else a repository-relative `out\`: the APK as `CIVION-Mobile-<version>.<n>.apk`, beside its
+`BUILD-INFO-<n>.txt` (commit, tree state, footprint, publication state, SHA-256), the Gradle log,
+`guard-<n>.txt` and a row in `build-history.csv`.
+
+Before it builds, the script re-measures what this fork has changed against the upstream base and
+fails on anything not recorded — see `$EngineHooks` and `$IntegrationPoints` in the script itself.
+The measured perimeter is everything outside `app-civion\` and `feature\civion\`.

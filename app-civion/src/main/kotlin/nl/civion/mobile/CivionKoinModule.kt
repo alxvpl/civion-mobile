@@ -14,6 +14,7 @@ import nl.civion.mobile.feature.featureModule
 import nl.civion.mobile.featureflag.civionFeatureFlagModule
 import nl.civion.mobile.provider.providerModule
 import nl.civion.mobile.reader.civionMessageReaderCssOverrideModule
+import nl.civion.mobile.startup.civionStartupRouterOverrideModule
 import nl.civion.mobile.widget.provider.MessageListWidgetProvider
 import nl.civion.mobile.widget.provider.UnreadWidgetProvider
 import nl.civion.mobile.widget.widgetModule
@@ -50,6 +51,7 @@ val appModule = module {
     // before these targeted CIVION overrides are loaded.
     includes(civionOAuthProviderOverrideModule)
     includes(civionMessageReaderCssOverrideModule)
+    includes(civionStartupRouterOverrideModule)
 }
 
 val appConfig = DefaultAppConfig(

@@ -10,8 +10,11 @@
       - the commit it was built from is recorded in the file name and in
         BUILD-INFO.txt, and an uncommitted working tree is refused by default;
       - the engine footprint required by civion-android-mail-edge-decision-r002
-        section 3.2 is re-measured, and the build fails if an engine file changed
-        that is not one of the recorded hooks in $EngineHooks;
+        section 3.2 is re-measured, and the build fails if any upstream file changed
+        that is not recorded — in $EngineHooks, or in $IntegrationPoints for the
+        repo-level files CIVION must touch to exist as a module at all. The perimeter
+        is everything outside app-civion\ and feature\civion\, so a directory nobody
+        thought of cannot fall outside it;
       - a SHA-256 is written next to the APK and appended to an append-only ledger.
 
     Examples:
@@ -168,6 +171,25 @@ try {
             'Covers the duplicate cases.'
     }
 
+    # Repo-level files CIVION must touch to exist as a product in this tree at all: the module
+    # list, its own CI, its own documentation. They are upstream files, so they are measured and
+    # recorded exactly like the hooks above and an unrecorded one still fails the build — but
+    # they are kept in their own list because they are not engine changes and never reach zero.
+    # Counting them as engine hooks would make the one number that must stay explainable
+    # permanently misleading.
+    $IntegrationPoints = [ordered]@{
+        'settings.gradle.kts' =
+            'Includes :app-civion and :feature:civion:navigation. A module cannot exist without being listed here.'
+        '.github/workflows/civion-mobile-build.yml' =
+            'CIVION Mobile build, calling app-civion/tools/build-civion-mobile.ps1 on the self-hosted runner.'
+        '.github/workflows/upstream-thunderbird-reference.yml' =
+            'Manual reference build of upstream app-thunderbird from the same commit, for side-by-side comparison.'
+        '.github/dependabot.yml' =
+            'Dependency update scope for this fork.'
+        'README.md' =
+            'Describes this repository as CIVION Mobile rather than as upstream Thunderbird for Android.'
+    }
+
     # Is this commit published? A clean tree is not the same as a published one:
     # an artifact built from a local-only commit cannot be reproduced by anyone else.
     $published = "unknown"
@@ -191,19 +213,28 @@ try {
         Write-Output "Fetch the full history to enforce it (actions/checkout with fetch-depth: 0)."
     }
     else {
-        $changed   = @(& git diff --name-only "$upstreamBase..HEAD" | Where-Object { $_ })
-        $engineRx  = '^(legacy|mail|backend|core|feature)/'
-        $civionRx  = '^feature/civion/'
-        $engineChanged = @($changed | Where-Object { $_ -match $engineRx -and $_ -notmatch $civionRx })
-        $appCommon     = @($changed | Where-Object { $_ -match '^app-common/' })
-        $civionFiles   = @($changed | Where-Object { $_ -match '^app-civion/' -or $_ -match $civionRx })
+        # What CIVION owns outright. Everything else in the tree is upstream and is measured.
+        #
+        # The perimeter is defined by exclusion on purpose. Listing the upstream directories
+        # instead — as this did, with '^(legacy|mail|backend|core|feature)/' — silently left
+        # app-common, app-k9mail, app-thunderbird, app-metadata, cli, components, build-plugin
+        # and every repo-root file unmeasured. app-common is built into all three applications,
+        # and a CIVION change did sit there unrecorded until the r001 audit found it. A new
+        # top-level directory upstream would have opened the same hole again.
+        $changed  = @(& git diff --name-only "$upstreamBase..HEAD" | Where-Object { $_ })
+        $civionRx = '^(app-civion/|feature/civion/)'
 
-        $engineUnrecorded = @($engineChanged | Where-Object { -not $EngineHooks.Contains($_) })
+        $civionFiles   = @($changed | Where-Object { $_ -match $civionRx })
+        $upstreamFiles = @($changed | Where-Object { $_ -notmatch $civionRx })
 
-        Write-Output ("changed files    : {0}" -f $changed.Count)
-        Write-Output ("CIVION files     : {0}" -f $civionFiles.Count)
-        Write-Output ("app-common files : {0}" -f $appCommon.Count)
-        Write-Output ("engine files     : {0}   ({1} recorded hooks, {2} unrecorded; decision r002 section 3.2 requires 0 unrecorded)" -f `
+        $integrationChanged = @($upstreamFiles | Where-Object { $IntegrationPoints.Contains($_) })
+        $engineChanged      = @($upstreamFiles | Where-Object { -not $IntegrationPoints.Contains($_) })
+        $engineUnrecorded   = @($engineChanged | Where-Object { -not $EngineHooks.Contains($_) })
+
+        Write-Output ("changed files      : {0}" -f $changed.Count)
+        Write-Output ("CIVION files       : {0}" -f $civionFiles.Count)
+        Write-Output ("integration points : {0}   (all recorded)" -f $integrationChanged.Count)
+        Write-Output ("engine files       : {0}   ({1} recorded hooks, {2} unrecorded; decision r002 section 3.2 requires 0 unrecorded)" -f `
                 $engineChanged.Count, ($engineChanged.Count - $engineUnrecorded.Count), $engineUnrecorded.Count)
 
         if ($engineChanged.Count -ne 0) {
@@ -217,9 +248,9 @@ try {
 
         if ($engineUnrecorded.Count -ne 0) {
             Write-Output ""
-            Write-Output "unrecorded engine files:"
+            Write-Output "unrecorded upstream files:"
             $engineUnrecorded | ForEach-Object { Write-Output "  $_" }
-            throw "Engine files changed that are not recorded hooks. Either move the change to composition, a resource override, a Koin override or a CIVION module, or add it to `$EngineHooks with the reason it cannot live anywhere cheaper. Do not widen the list to make a build pass."
+            throw "Upstream files changed that are not recorded. Either move the change to composition, a resource override, a Koin override or a CIVION module, or add it to `$EngineHooks with the reason it cannot live anywhere cheaper — or to `$IntegrationPoints if it is a repo-level integration point rather than an engine change. Do not widen either list to make a build pass."
         }
     }
 
@@ -368,6 +399,7 @@ try {
         "branch   : $branch"
         "tree     : $(if ($isDirty) { 'DIRTY — not reproducible from the repository' } else { 'clean' })"
         "engine   : $($engineChanged.Count) engine files changed vs $upstreamBase ($($engineChanged.Count - $engineUnrecorded.Count) recorded hooks, $($engineUnrecorded.Count) unrecorded)"
+        "integr.  : $($integrationChanged.Count) repo-level integration points, all recorded"
         "published: $published"
         "built    : $built"
         "builder  : $(if ($isCi) { 'github actions, self-hosted runner' } else { 'manual' })"
