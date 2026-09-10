@@ -122,6 +122,25 @@ jobs:
             -Edition integrated `
             -NoClean
 
+      # The Android runtime gate, deliberately its own stage rather than part of FAST.
+      #
+      # FAST is JVM and static checks: it answers in minutes and gates every push. This
+      # provisions an emulator, boots it, installs two APKs and drives a test process
+      # inside the application - a different kind of cost and a different kind of
+      # failure, and it should be readable as such when it goes red.
+      #
+      # It is a step in this job rather than a job of its own because there is one
+      # runner and one workspace: a separate job would check out again and rebuild
+      # everything this one has already built, to run a test that takes a minute.
+      #
+      # Only the standalone edition runs here. The editions differ by compiled-in code,
+      # not by anything the Android runtime does differently, so running both would pay
+      # twice for the same evidence. `-Edition integrated` is there when it is wanted.
+      - name: Android runtime smoke (managed device)
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          .\app-civion\tools\run-managed-device-tests.ps1 -Edition standalone
+
       # Every build, CI or manual, lands in the directory the script resolved and
       # reported as its `outdir` output. The workflow artifact is a copy for anyone
       # without access to the machine.

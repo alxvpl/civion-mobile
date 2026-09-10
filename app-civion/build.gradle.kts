@@ -303,6 +303,40 @@ android {
         }
     }
 
+    /*
+     * The Android runtime the acceptance contract has been waiting for.
+     *
+     * Several journeys in `feature:civion:acceptance` are pending on ANDROID_RUNTIME: the
+     * decisions around them are unit-tested, but what they end in — an activity launching, a
+     * notification's PendingIntent, an attachment leaving the app through the platform — cannot
+     * be observed without a device. This is that device, declared so Gradle provisions, boots,
+     * installs, runs and shuts it down as part of a task rather than as something a person sets
+     * up by hand and remembers differently next time.
+     *
+     * AOSP ATD: an automated-test image with the Play services, UI and setup wizard stripped
+     * out. It boots faster and, more importantly, boots the same way every time, which is what
+     * a test runtime needs and what a device meant for a human to look at is not.
+     *
+     * `require64Bit` because only the x86_64 image is installed; without it the emulator may
+     * resolve a 32-bit variant that is not there and fail at provisioning rather than here.
+     *
+     * The device is declared once, at the module level, and applies to every variant. The task
+     * names are generated per variant — see `:app-civion:tasks --group verification`.
+     */
+    @Suppress("UnstableApiUsage")
+    testOptions {
+        managedDevices {
+            localDevices {
+                create("pixelApi36") {
+                    device = "Pixel 6"
+                    apiLevel = 36
+                    systemImageSource = "aosp-atd"
+                    require64Bit = true
+                }
+            }
+        }
+    }
+
     packaging {
         jniLibs {
             excludes += listOf("kotlin/**")
@@ -364,6 +398,10 @@ dependencies {
     implementation(projects.feature.widget.unread)
 
     implementation(libs.androidx.work.runtime)
+
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.ext.junit.ktx)
 
     testImplementation(projects.feature.civion.acceptance)
     testImplementation(libs.mockito.kotlin)
