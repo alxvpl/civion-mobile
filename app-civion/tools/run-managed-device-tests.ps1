@@ -86,16 +86,20 @@ Write-Output "image   : android-36 / aosp_atd / x86_64"
 # A previous run that was killed leaves a qemu process holding the console port and the AVD
 # lock. The next run then boots a device that never comes online, and times out looking at it.
 #
-# Only the virtual machine counts. After a perfectly good run, AGP leaves behind one
-# `emulator -kill <pid> -sleep 1800` watchdog per device for half an hour; those are not
-# devices, hold nothing, and treating them as one would fail every second run for thirty
-# minutes. The command line is what tells them apart.
-$live = @(Get-CimInstance Win32_Process -Filter "Name like '%qemu-system%' or Name like '%emulator%'" -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -like "qemu-system*" -or $_.CommandLine -notmatch '\s-kill\s' })
+# Only qemu counts, and only its name is looked at.
+#
+# A running device is always a qemu-system process; emulator.exe is the launcher, and after a
+# perfectly good run AGP leaves one `emulator -kill <pid> -sleep 1800` watchdog per device
+# behind for half an hour. Those hold nothing. Telling them apart by command line worked when
+# run by hand and failed on the runner, which executes as NETWORK SERVICE and cannot read the
+# command line of a process owned by another account: the property came back empty, every
+# watchdog looked like a device, and the step refused to start. Matching on the process name
+# needs no such permission.
+$live = @(Get-Process -Name "qemu-system-*" -ErrorAction SilentlyContinue)
 
 if ($live.Count -ne 0) {
     Write-Section "Emulator already running"
-    $live | ForEach-Object { Write-Output ("  {0} (pid {1})" -f $_.Name, $_.ProcessId) }
+    $live | ForEach-Object { Write-Output ("  {0} (pid {1})" -f $_.ProcessName, $_.Id) }
     throw "An emulator is already running. A managed device run needs the console port and the AVD lock to itself. Stop these processes, or wait for the run that owns them to finish."
 }
 
