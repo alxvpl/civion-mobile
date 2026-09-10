@@ -8,7 +8,12 @@ package nl.civion.mobile.acceptance
  * check.
  */
 enum class AcceptanceTier {
-    /** Runs on every push, in minutes. Unit tests and checks against the built artifact. */
+    /**
+     * Runs on every push, in minutes: unit tests, checks against the built artifact, and the
+     * managed-device suite. The device suite is its own CI stage rather than part of the JVM
+     * one - a different kind of cost and a different kind of failure - but it runs at the same
+     * frequency, and this field is about frequency.
+     */
     FAST,
 
     /** Runs unattended, nightly. Slower harnesses: a local mail server, an emulator. */
@@ -50,13 +55,20 @@ sealed interface AcceptanceCoverage {
     val runner: AcceptanceRunner
 
     /**
-     * Checked. [evidence] names what does the checking - a test class, or a gate in the build
-     * script - so a claim here can be followed to the thing that backs it.
+     * Checked. [evidence] names what does the checking - test classes, or a gate in the build
+     * script - so a claim here can be followed to the things that back it.
+     *
+     * More than one entry is normal and is not duplication: a journey is often decided in one
+     * place and observed in another, and a unit test that pins the decision keeps its meaning
+     * after a device test proves the behaviour. [runner] is what the journey's own proof
+     * requires, not what every listed piece of evidence needs.
      */
     data class Automated(
         override val runner: AcceptanceRunner,
-        val evidence: String,
-    ) : AcceptanceCoverage
+        val evidence: List<String>,
+    ) : AcceptanceCoverage {
+        constructor(runner: AcceptanceRunner, vararg evidence: String) : this(runner, evidence.toList())
+    }
 
     /**
      * Not checked yet. [blockedBy] says what is missing, in terms of what would have to be

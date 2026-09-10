@@ -25,6 +25,7 @@ class CivionAcceptanceTest {
      */
     private val required = setOf(
         "first-launch",
+        "product-identity",
         "account-add",
         "account-remove",
         "google-oauth",
@@ -69,15 +70,28 @@ class CivionAcceptanceTest {
     }
 
     /**
-     * A claim of coverage has to be followable. An empty evidence string is a journey marked
-     * done by someone who did not do it.
+     * A claim of coverage has to be followable. No evidence, or a blank entry among it, is a
+     * journey marked done by someone who did not do it.
      */
     @Test
     fun `should back every claim of coverage with named evidence`() {
         val unbacked = CivionAcceptance.automated()
-            .filter { (it.coverage as AcceptanceCoverage.Automated).evidence.isBlank() }
+            .map { it to (it.coverage as AcceptanceCoverage.Automated).evidence }
+            .filter { (_, evidence) -> evidence.isEmpty() || evidence.any { it.isBlank() } }
 
-        assertThat(unbacked.map { it.id }).isEmpty()
+        assertThat(unbacked.map { (journey, _) -> journey.id }).isEmpty()
+    }
+
+    /**
+     * Evidence is named once. The same test listed twice reads as two independent checks.
+     */
+    @Test
+    fun `should not list the same evidence twice for one journey`() {
+        val duplicated = CivionAcceptance.automated()
+            .map { it to (it.coverage as AcceptanceCoverage.Automated).evidence }
+            .filter { (_, evidence) -> evidence.size != evidence.toSet().size }
+
+        assertThat(duplicated.map { (journey, _) -> journey.id }).isEmpty()
     }
 
     /**

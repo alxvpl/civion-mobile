@@ -399,6 +399,7 @@ dependencies {
 
     implementation(libs.androidx.work.runtime)
 
+    androidTestImplementation(projects.feature.civion.acceptance)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.ext.junit.ktx)

@@ -18,7 +18,7 @@ class AcceptanceEvidenceTest {
     @Test
     fun `should find every test this module is named for`() {
         val missing = CivionAcceptance.automated()
-            .map { (it.coverage as AcceptanceCoverage.Automated).evidence }
+            .flatMap { (it.coverage as AcceptanceCoverage.Automated).evidence }
             .filter { it.startsWith("nl.civion.mobile.navigation.") }
             .filterNot { runCatching { Class.forName(it) }.isSuccess }
 

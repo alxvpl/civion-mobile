@@ -28,7 +28,8 @@ class AcceptanceEvidenceTest {
     @Test
     fun `should find every test this module is named for`() {
         val missing = CivionAcceptance.automated()
-            .mapNotNull { (it.coverage as AcceptanceCoverage.Automated).evidence.takeIf { e -> e.isOwned() } }
+            .flatMap { (it.coverage as AcceptanceCoverage.Automated).evidence }
+            .filter { it.isOwned() }
             .filterNot { it.isLoadable() }
 
         assertThat(missing).isEmpty()

@@ -122,24 +122,40 @@ jobs:
             -Edition integrated `
             -NoClean
 
-      # The Android runtime gate, deliberately its own stage rather than part of FAST.
+      # The Android runtime acceptance suite, deliberately its own stage rather than part
+      # of FAST.
       #
       # FAST is JVM and static checks: it answers in minutes and gates every push. This
-      # provisions an emulator, boots it, installs two APKs and drives a test process
-      # inside the application - a different kind of cost and a different kind of
-      # failure, and it should be readable as such when it goes red.
+      # provisions an emulator, boots it, installs two APKs and drives the application
+      # through journeys from the acceptance contract - a different kind of cost and a
+      # different kind of failure, and it should be readable as such when it goes red.
       #
       # It is a step in this job rather than a job of its own because there is one
       # runner and one workspace: a separate job would check out again and rebuild
-      # everything this one has already built, to run a test that takes a minute.
+      # everything this one has already built, to run a suite that takes a minute.
       #
       # Only the standalone edition runs here. The editions differ by compiled-in code,
-      # not by anything the Android runtime does differently, so running both would pay
-      # twice for the same evidence. `-Edition integrated` is there when it is wanted.
-      - name: Android runtime smoke (managed device)
+      # not by anything these journeys exercise differently, so running both would pay
+      # twice for the same evidence. `-Edition integrated` is there when it is wanted,
+      # and the edition boundary itself is proven by the artifact gates above.
+      - name: Android runtime acceptance (managed device)
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           .\app-civion\tools\run-managed-device-tests.ps1 -Edition standalone
+
+      # What the contract says about itself, in the build log, taken from the inventory
+      # rather than from anyone's memory of it.
+      - name: Acceptance contract status
+        if: always()
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $env:JAVA_HOME = "F:\Android\jdk-21"
+          $env:ANDROID_HOME = "F:\Android\Sdk"
+          $env:ANDROID_SDK_ROOT = "F:\Android\Sdk"
+          $env:Path = "$env:JAVA_HOME\bin;$env:Path"
+          $cmd = '"{0}" :feature:civion:acceptance:acceptanceReport -q --no-daemon --no-watch-fs' -f (Join-Path $PWD "gradlew.bat")
+          & cmd.exe /d /c $cmd
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # Every build, CI or manual, lands in the directory the script resolved and
       # reported as its `outdir` output. The workflow artifact is a copy for anyone

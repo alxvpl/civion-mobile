@@ -21,3 +21,16 @@ codeCoverage {
     branchCoverage = 0
     lineCoverage = 0
 }
+
+/*
+ * The contract, read out loud.
+ *
+ * Anything that quotes a coverage number - a report, a commit message, a status update - should
+ * take it from here. A number typed in by hand is right once.
+ */
+tasks.register<JavaExec>("acceptanceReport") {
+    group = "verification"
+    description = "Prints which acceptance journeys are covered and which are pending."
+    mainClass.set("nl.civion.mobile.acceptance.AcceptanceReportKt")
+    classpath = sourceSets["main"].runtimeClasspath
+}

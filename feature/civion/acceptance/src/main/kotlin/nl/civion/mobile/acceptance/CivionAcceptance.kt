@@ -32,7 +32,20 @@ object CivionAcceptance {
             id = "first-launch",
             title = "A first launch, with no account set up, reaches onboarding",
             tier = FAST,
-            coverage = Automated(JVM, "nl.civion.mobile.startup.CivionStartupRouterBehaviourTest"),
+            coverage = Automated(
+                ANDROID_RUNTIME,
+                "nl.civion.mobile.acceptance.runtime.FirstLaunchTest",
+                "nl.civion.mobile.startup.CivionStartupRouterBehaviourTest",
+            ),
+        ),
+        AcceptanceJourney(
+            id = "product-identity",
+            title = "The running application presents itself as CIVION Mobile",
+            tier = FAST,
+            coverage = Automated(
+                ANDROID_RUNTIME,
+                "nl.civion.mobile.acceptance.runtime.ProductIdentityTest",
+            ),
         ),
         AcceptanceJourney(
             id = "account-persistence",
@@ -46,8 +59,9 @@ object CivionAcceptance {
             tier = NIGHTLY,
             coverage = Pending(
                 ANDROID_RUNTIME,
-                "The decision is covered; the launch it ends in is not. Needs MessageHomeActivity " +
-                    "under an Android runtime, which no harness starts yet.",
+                "The device harness exists and the decision is covered; the account does not. " +
+                    "Returning to an account at its Inbox needs an account that has folders, and " +
+                    "one cannot be set up without a mail server.",
             ),
         ),
 
@@ -69,8 +83,8 @@ object CivionAcceptance {
             tier = NIGHTLY,
             coverage = Pending(
                 ANDROID_RUNTIME,
-                "Removal is asynchronous and reaches storage. Needs an Android runtime with the " +
-                    "account store; no harness starts one yet.",
+                "The device harness exists; the account does not. Removing an account needs one " +
+                    "to have been added, and adding one needs a mail server.",
             ),
         ),
         AcceptanceJourney(
@@ -147,8 +161,9 @@ object CivionAcceptance {
             tier = NIGHTLY,
             coverage = Pending(
                 ANDROID_RUNTIME,
-                "Opening an attachment leaves the application through the platform. Needs an " +
-                    "Android runtime.",
+                "The device harness exists; the attachment does not. Opening one leaves the " +
+                    "application through the platform, and there is nothing to open until a " +
+                    "message with an attachment has been delivered.",
             ),
         ),
         AcceptanceJourney(
@@ -157,8 +172,9 @@ object CivionAcceptance {
             tier = NIGHTLY,
             coverage = Pending(
                 ANDROID_RUNTIME,
-                "The recorded hook changes which intent is built. Needs an Android runtime to " +
-                    "read the resulting PendingIntent.",
+                "The device harness exists; the message does not. The recorded hook changes which " +
+                    "intent a notification builds, and there is no notification without an " +
+                    "account and a delivered message.",
             ),
         ),
         AcceptanceJourney(
@@ -167,9 +183,10 @@ object CivionAcceptance {
             tier = NIGHTLY,
             coverage = Pending(
                 ANDROID_RUNTIME,
-                "The drawer is Compose and is constructed by MessageHomeActivity. Needs an " +
-                    "Android runtime; the reorder use case itself is covered upstream-side by " +
-                    "MoveAccountTest.",
+                "The device harness exists; the accounts do not. A drawer with nothing in it " +
+                    "shows nothing worth asserting, and listing or reordering accounts needs " +
+                    "accounts, which need a mail server. The reorder use case itself is covered " +
+                    "by MoveAccountTest.",
             ),
         ),
 
@@ -191,7 +208,11 @@ object CivionAcceptance {
             id = "integration-failure-isolation",
             title = "The mail client works when the CIVION integration is absent or unusable",
             tier = FAST,
-            coverage = Automated(JVM, "nl.civion.mobile.edition.EditionModuleTest"),
+            coverage = Automated(
+                ANDROID_RUNTIME,
+                "nl.civion.mobile.acceptance.runtime.IntegrationIsolationTest",
+                "nl.civion.mobile.edition.EditionModuleTest",
+            ),
         ),
     )
 
