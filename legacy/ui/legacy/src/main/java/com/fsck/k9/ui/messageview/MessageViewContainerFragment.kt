@@ -89,6 +89,8 @@ class MessageViewContainerFragment : Fragment() {
         val resources = inflater.context.resources
         val pageMargin = resources.getDimension(R.dimen.message_view_pager_page_margin).toInt()
 
+        wireMessageActionBar(view)
+
         viewPager = view.findViewById(R.id.message_viewpager)
         viewPager.isUserInputEnabled = true
         viewPager.offscreenPageLimit = ViewPager2.OFFSCREEN_PAGE_LIMIT_DEFAULT
@@ -210,6 +212,20 @@ class MessageViewContainerFragment : Fragment() {
 
     fun onToggleRead() {
         messageViewFragment.onToggleRead()
+    }
+
+    /**
+     * Connects a bottom action bar, when the layout in use has one.
+     *
+     * Android Mail overrides this fragment's layout to put reply and forward within reach instead
+     * of behind the header's overflow. The buttons are located by tag rather than by id, because
+     * ids generated in the application module are not visible from here, and looked up rather
+     * than required, so the layouts that do not have them - K-9's and Thunderbird's - are
+     * unaffected.
+     */
+    private fun wireMessageActionBar(view: View) {
+        view.findViewWithTag<View>("civion_action_reply")?.setOnClickListener { onReply() }
+        view.findViewWithTag<View>("civion_action_forward")?.setOnClickListener { onForward() }
     }
 
     fun onForward() {

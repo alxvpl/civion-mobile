@@ -1,6 +1,6 @@
 package nl.civion.mobile.ui.drawer
 
-import net.thunderbird.feature.mail.folder.api.FolderType
+import androidx.annotation.DrawableRes
 
 /**
  * What the drawer shows.
@@ -13,57 +13,46 @@ internal data class CivionDrawerState(
     val selectedAccountUuid: String? = null,
     val selectedFolderId: Long? = null,
     val isUnifiedSelected: Boolean = false,
-    val selectedShortcut: SmartDestination? = null,
+    val isAccountSelectorOpen: Boolean = false,
     val unifiedUnreadCount: Int = 0,
-)
+) {
+    val selectedAccount: DrawerAccount?
+        get() = accounts.firstOrNull { it.uuid == selectedAccountUuid }
+}
 
 /**
  * An account, as the drawer lists it.
  *
  * Only the address, because that is what the user picks an account by. A display name is
- * something the user typed once during setup and is usually either the same as the address or
- * their own name repeated on every row.
+ * something typed once during setup and is usually either the address again or the user's own
+ * name repeated on every row.
  */
 internal data class DrawerAccount(
     val uuid: String,
     val email: String,
     val unreadCount: Int,
-    val folders: List<DrawerFolder>,
+    val folders: List<DrawerFolderNode>,
 )
 
-internal data class DrawerFolder(
-    val id: Long,
-    val name: String,
-    val type: FolderType,
+/**
+ * A folder, and whatever is under it.
+ *
+ * The engine hands back a flat list whose names carry the server's own path, so the nesting is
+ * rebuilt here rather than invented: what the drawer shows is the structure the account actually
+ * has, including folders the user made themselves.
+ *
+ * [id] is null for a path segment that is not itself a folder - a server can have `Work/Clients`
+ * without having `Work`. Such a node can be expanded but not opened.
+ */
+internal data class DrawerFolderNode(
+    val id: Long?,
+    val label: String,
+    @param:DrawableRes val iconRes: Int,
     val unreadCount: Int,
-)
+    val children: List<DrawerFolderNode> = emptyList(),
+) {
+    val hasChildren: Boolean get() = children.isNotEmpty()
 
-/**
- * The destinations that are a saved search rather than a folder.
- *
- * Each one is a real query across every account, run by the same search the unified inbox uses.
- * They are here because they are how mail is actually looked for - what is unread, what needs
- * acting on, what carried a file - and none of them requires anything the engine does not
- * already index.
- */
-internal enum class SmartDestination {
-    UNREAD,
-    FLAGGED,
-    ATTACHMENTS,
+    /** Unread in this folder and everything under it, which is what a collapsed node must say. */
+    val totalUnreadCount: Int get() = unreadCount + children.sumOf { it.totalUnreadCount }
 }
-
-/**
- * The per-account folders the drawer offers, in the order it offers them.
- *
- * A mail account can have hundreds of folders; the drawer is not a folder browser, and "Manage
- * folders" is where the full list lives. These are the ones every account has and every user
- * reaches for.
- */
-internal val DRAWER_FOLDER_ORDER: List<FolderType> = listOf(
-    FolderType.INBOX,
-    FolderType.DRAFTS,
-    FolderType.SENT,
-    FolderType.ARCHIVE,
-    FolderType.TRASH,
-    FolderType.SPAM,
-)

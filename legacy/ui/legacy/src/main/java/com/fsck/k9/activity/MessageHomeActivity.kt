@@ -678,9 +678,8 @@ open class MessageHomeActivity :
      *
      * The drawer is constructed here rather than resolved, so substituting one is the single
      * change this file carries for it. [CivionDrawer] implements the same NavigationDrawer
-     * interface and takes the same callbacks, plus [openSearch]: its Unread, Flagged and
-     * Attachments destinations are ordinary saved searches, and this is the method that already
-     * knows how to display one.
+     * interface and takes the same callbacks, plus a way to sync the account it is showing -
+     * upstream's drawer did that through use cases of its own that are internal to it.
      */
     private fun initializeFolderDrawer() {
         navigationDrawer = CivionDrawer(
@@ -689,9 +688,23 @@ open class MessageHomeActivity :
             openAddAccount = { launchAddAccountScreen() },
             openFolder = { accountId, folderId -> openFolder(accountId, folderId) },
             openUnifiedFolder = { openUnifiedFolders() },
-            openSearch = { search -> actionDisplaySearch(this, search, false, false) },
+            openManageFolders = { launchManageFoldersScreen() },
+            syncAccount = { accountUuid -> syncAccount(accountUuid) },
             openSettings = { SettingsActivity.launch(this) },
             createDrawerListener = { createDrawerListener() },
+        )
+    }
+
+    /** Fetches mail for one account now, because the user asked for it rather than a timer. */
+    private fun syncAccount(accountUuid: String) {
+        val account = accountManager.getAccount(accountUuid) ?: return
+
+        messagingController.checkMail(
+            account,
+            true,
+            true,
+            false,
+            null,
         )
     }
 

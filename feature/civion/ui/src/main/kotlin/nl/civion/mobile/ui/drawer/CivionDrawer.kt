@@ -8,6 +8,8 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import app.k9mail.legacy.ui.folder.DisplayFolderRepository
+import app.k9mail.legacy.ui.folder.FolderIconProvider
+import app.k9mail.legacy.ui.folder.FolderNameFormatter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -20,7 +22,6 @@ import net.thunderbird.core.ui.theme.api.FeatureThemeProvider
 import net.thunderbird.feature.mail.folder.api.FolderType
 import net.thunderbird.feature.navigation.drawer.api.NavigationDrawer
 import net.thunderbird.feature.navigation.drawer.api.R
-import net.thunderbird.feature.search.legacy.LocalMessageSearch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -41,7 +42,8 @@ class CivionDrawer(
     private val openAccount: (accountUuid: String) -> Unit,
     private val openFolder: (accountUuid: String, folderId: Long) -> Unit,
     private val openUnifiedFolder: () -> Unit,
-    private val openSearch: (LocalMessageSearch) -> Unit,
+    private val openManageFolders: () -> Unit,
+    private val syncAccount: (accountUuid: String) -> Unit,
     private val openSettings: () -> Unit,
     private val openAddAccount: () -> Unit,
     createDrawerListener: () -> DrawerLayout.DrawerListener,
@@ -50,6 +52,12 @@ class CivionDrawer(
     private val themeProvider: FeatureThemeProvider by inject()
     private val accountManager: LegacyAccountDtoManager by inject()
     private val displayFolderRepository: DisplayFolderRepository by inject()
+    private val folderNameFormatter: FolderNameFormatter by inject()
+
+    private val folderTree = CivionFolderTree(
+        nameFormatter = folderNameFormatter,
+        iconProvider = FolderIconProvider(),
+    )
 
     private val drawer: DrawerLayout = parent.findViewById(R.id.navigation_drawer_layout)
     private val drawerContent: ComposeView = parent.findViewById(R.id.navigation_drawer_content)
@@ -72,27 +80,33 @@ class CivionDrawer(
 
                 CivionDrawerContent(
                     state = drawerState.value,
+                    onAccountSelectorToggle = {
+                        state.update { it.copy(isAccountSelectorOpen = !it.isAccountSelectorOpen) }
+                    },
                     onAllInboxesClick = {
-                        close()
+                        closeSelector()
                         openUnifiedFolder()
                     },
                     onAccountClick = {
-                        close()
+                        closeSelector()
                         openAccount(it)
                     },
                     onAccountMove = ::moveAccount,
                     onAddAccountClick = {
-                        close()
+                        closeSelector()
                         openAddAccount()
-                    },
-                    onSmartDestinationClick = { destination ->
-                        state.update { it.copy(selectedShortcut = destination) }
-                        close()
-                        openSearch(CivionDrawerSearches.forDestination(destination))
                     },
                     onFolderClick = { accountUuid, folderId ->
                         close()
                         openFolder(accountUuid, folderId)
+                    },
+                    onSyncAccountClick = {
+                        close()
+                        state.value.selectedAccountUuid?.let(syncAccount)
+                    },
+                    onManageFoldersClick = {
+                        close()
+                        openManageFolders()
                     },
                     onSettingsClick = {
                         close()
@@ -122,14 +136,7 @@ class CivionDrawer(
                         },
                     ) { folderLists ->
                         accounts.mapIndexed { index, account ->
-                            val folders = folderLists[index].map { displayFolder ->
-                                DrawerFolder(
-                                    id = displayFolder.folder.id,
-                                    name = displayFolder.folder.name,
-                                    type = displayFolder.folder.type,
-                                    unreadCount = displayFolder.unreadMessageCount,
-                                )
-                            }
+                            val displayFolders = folderLists[index]
 
                             DrawerAccount(
                                 uuid = account.uuid,
@@ -137,8 +144,10 @@ class CivionDrawer(
                                 // The account's own number is its Inbox. Counting every folder
                                 // would add Spam and Drafts to a badge the user reads as "mail
                                 // waiting for me".
-                                unreadCount = folders.firstOrNull { it.type == FolderType.INBOX }?.unreadCount ?: 0,
-                                folders = folders,
+                                unreadCount = displayFolders
+                                    .firstOrNull { it.folder.type == FolderType.INBOX }
+                                    ?.unreadMessageCount ?: 0,
+                                folders = folderTree.build(displayFolders),
                             )
                         }
                     }
@@ -161,12 +170,18 @@ class CivionDrawer(
         accountManager.moveAccount(account, toPosition)
     }
 
+    /** Choosing an account puts the folder list back, which is what the user went there for. */
+    private fun closeSelector() {
+        state.update { it.copy(isAccountSelectorOpen = false) }
+        close()
+    }
+
     override val isOpen: Boolean
         get() = drawer.isDrawerOpen(GravityCompat.START)
 
     override fun selectAccount(accountUuid: String) {
         state.update {
-            it.copy(selectedAccountUuid = accountUuid, isUnifiedSelected = false, selectedShortcut = null)
+            it.copy(selectedAccountUuid = accountUuid, isUnifiedSelected = false, isAccountSelectorOpen = false)
         }
     }
 
@@ -176,14 +191,14 @@ class CivionDrawer(
                 selectedAccountUuid = accountUuid,
                 selectedFolderId = folderId,
                 isUnifiedSelected = false,
-                selectedShortcut = null,
+                isAccountSelectorOpen = false,
             )
         }
     }
 
     override fun selectUnifiedInbox() {
         state.update {
-            it.copy(isUnifiedSelected = true, selectedFolderId = null, selectedShortcut = null)
+            it.copy(isUnifiedSelected = true, selectedFolderId = null, isAccountSelectorOpen = false)
         }
     }
 

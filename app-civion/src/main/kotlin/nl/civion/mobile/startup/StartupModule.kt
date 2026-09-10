@@ -19,7 +19,6 @@ internal val civionStartupRouterOverrideModule = module {
         CivionStartupRouter(
             accounts = get(),
             upstream = DefaultStartupRouter(get(), get()),
-            productDefaults = CivionProductDefaults(storage = get(), storageEditor = get()),
         )
     }.override()
 }

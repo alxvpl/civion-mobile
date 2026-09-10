@@ -146,18 +146,18 @@ internal val civionDarkColorScheme = ThemeColorScheme(
     errorContainer = Color(color = 0xFF6F2A00),
     onErrorContainer = Color(color = 0xFFFFDBCC),
 
-    surfaceDim = Color(color = 0xFF121213),
-    surface = Color(color = 0xFF131314),
-    surfaceBright = Color(color = 0xFF3A393B),
+    surfaceDim = Color(color = 0xFF17181B),
+    surface = Color(color = 0xFF1C1E21),
+    surfaceBright = Color(color = 0xFF34373C),
     onSurface = Color(color = 0xFFEAE7E8),
     // Lifted from the inherited value: secondary text was the worst offender in dark.
     onSurfaceVariant = Color(color = 0xFFD2D3D8),
 
-    surfaceContainerLowest = Color(color = 0xFF0E0E0F),
-    surfaceContainerLow = Color(color = 0xFF1C1C1D),
-    surfaceContainer = Color(color = 0xFF222122),
-    surfaceContainerHigh = Color(color = 0xFF2C2B2D),
-    surfaceContainerHighest = Color(color = 0xFF373638),
+    surfaceContainerLowest = Color(color = 0xFF141619),
+    surfaceContainerLow = Color(color = 0xFF212429),
+    surfaceContainer = Color(color = 0xFF262A2F),
+    surfaceContainerHigh = Color(color = 0xFF2E3238),
+    surfaceContainerHighest = Color(color = 0xFF373C43),
 
     inverseSurface = Color(color = 0xFFEAE7E8),
     inverseOnSurface = Color(color = 0xFF303031),

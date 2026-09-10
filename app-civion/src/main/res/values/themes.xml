@@ -14,6 +14,9 @@
         <item name="actionBarPopupTheme">@style/Widget.App.ActionMode.PopupMenu</item>
         <item name="toolbarStyle">@style/Widget.App.Toolbar</item>
 
+        <!-- A little less height than the platform default, so the header sits closer to the mail. -->
+        <item name="actionBarSize">52dp</item>
+
         <!-- Legacy styles -->
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
 
@@ -62,6 +65,9 @@
         <item name="actionModeCloseDrawable">@drawable/ic_close</item>
         <item name="actionBarPopupTheme">@style/Widget.App.ActionMode.PopupMenu</item>
         <item name="toolbarStyle">@style/Widget.App.Toolbar</item>
+
+        <!-- A little less height than the platform default, so the header sits closer to the mail. -->
+        <item name="actionBarSize">52dp</item>
 
         <!-- Legacy styles -->
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>

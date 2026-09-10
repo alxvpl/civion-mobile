@@ -152,6 +152,8 @@ try {
             'Dependency on feature:civion:navigation, which holds the last-used account and folder.'
         'legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt' =
             'Constructs Android Mail''s drawer instead of the upstream one - the drawer is built here rather than resolved, so this is the only place it can be substituted, and owning it removed eleven hooks from feature/navigation/drawer/dropdown. Also records the account and folder on screen and reopens an account at the folder it was left in (initializeFromLocalSearch and openRealAccount are the only places every navigation path passes through), and makes Back leave the account last, returning to its Inbox before the unified inbox.'
+        'legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewContainerFragment.kt' =
+            'Connects the reply and forward buttons of Android Mail''s message-view layout, which is a resource override. The fragment inflates the layout, so nothing else can reach those views; they are looked up by tag rather than by id, because ids generated in app-civion are not visible here, and looked up rather than required, so K-9''s and Thunderbird''s layouts are unaffected.'
         'legacy/common/src/main/java/com/fsck/k9/notification/K9NotificationActionCreator.kt' =
             'A notification opens the account it belongs to instead of the unified inbox, so Back returns to that account.'
         'legacy/common/src/main/java/com/fsck/k9/notification/KoinModule.kt' =

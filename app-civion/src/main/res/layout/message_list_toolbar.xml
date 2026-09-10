@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android Mail override of the message list toolbar.
+
+  Same view, same ids, same class: the activity finds toolbarTitle and toolbarSubtitle and sets
+  text on them, and none of that changes. What changes is how much of the screen the header takes
+  before any mail is shown.
+
+  The folder name was title-large with the account address the same weight underneath, which read
+  as two headings and pushed the first message down. The folder is now title-medium - still the
+  clear subject of the screen - and the account is body-small in the secondary colour, which is
+  what it is: context for the folder, not a second title. The vertical margin around the pair is
+  tightened to match.
+
+  Upstream's comment on why the toolbar's own title support is not used still applies and is kept.
+-->
+<com.google.android.material.appbar.MaterialToolbar
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/toolbar"
+    style="?attr/toolbarStyle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentTop="true"
+    android:minHeight="?attr/actionBarSize"
+    tools:navigationIcon="@drawable/ic_arrow_back"
+    >
+
+    <!-- We're not using MaterialToolbar's title/subtitle support because it is broken when using large system
+         font sizes. See https://issuetracker.google.com/issues/135865267 -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="2dp"
+        android:orientation="vertical"
+        >
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/toolbarTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textAppearance="?attr/textAppearanceTitleMedium"
+            android:textColor="?attr/colorOnSurface"
+            tools:text="Inbox"
+            />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/toolbarSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone"
+            tools:text="demo@domain.example"
+            tools:visibility="visible"
+            />
+
+    </LinearLayout>
+
+</com.google.android.material.appbar.MaterialToolbar>

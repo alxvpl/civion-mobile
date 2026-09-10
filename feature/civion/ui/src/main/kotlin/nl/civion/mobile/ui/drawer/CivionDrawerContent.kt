@@ -1,15 +1,24 @@
 package nl.civion.mobile.ui.drawer
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -18,53 +27,63 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import kotlin.math.roundToInt
-import net.thunderbird.components.ui.bolt.atom.DividerHorizontal
 import net.thunderbird.components.ui.bolt.atom.Surface
 import net.thunderbird.components.ui.bolt.atom.icon.Icon
 import net.thunderbird.components.ui.bolt.atom.icon.Icons
+import net.thunderbird.components.ui.bolt.atom.text.TextBodyMedium
 import net.thunderbird.components.ui.bolt.atom.text.TextLabelSmall
-import net.thunderbird.components.ui.bolt.organism.drawer.NavigationDrawerItem
 import net.thunderbird.components.ui.bolt.theme.BoltTheme
-import net.thunderbird.feature.mail.folder.api.FolderType
 
-private const val DRAWER_WIDTH_DP = 320
-private const val DRAGGED_ITEM_ALPHA = 0.85f
+private const val DRAWER_WIDTH_DP = 300
+private const val ROW_HEIGHT_DP = 44
+private const val ROW_CORNER_DP = 8
+private const val INDENT_PER_LEVEL_DP = 16
+private const val DRAGGED_ITEM_ALPHA = 0.9f
+private const val MAX_SHOWN_COUNT = 999
 
 /**
  * Android Mail's navigation drawer.
  *
- * One list, read top to bottom: everything, then the accounts, then the ways of looking across
- * them, then the folders of whichever account is open, then settings. The upstream drawer this
- * replaces had two modes behind a toggle on the account header - accounts *or* folders - so
- * reaching a folder in another account meant switching mode, choosing the account, switching
- * back. Flat is fewer taps and, more to the point, the whole drawer is visible at once.
+ * The shape is Thunderbird's, because it is the right one for mail: the account you are in at the
+ * top, its real folders below, and every other account one tap away behind the header. What is
+ * different is the finish - one line per row, no avatar in front of an address, no capsule
+ * highlight, and a graphite surface rather than near-black.
  *
- * What is deliberately absent: pinned, snoozed, scheduled, recently seen, appointments, travel,
- * packages, subscriptions, coupons, entertainment, contacts, help and marketing rows. A drawer
- * is for going somewhere, and every row that is not a destination makes the ones that are harder
- * to find.
+ * The folder list is the account's own, rebuilt with its nesting intact. It is deliberately not a
+ * curated set of global categories: a folder tree is what a mail account *is*, and replacing it
+ * with a shorter list of clever destinations takes away the folders the user made and hides the
+ * ones the server has.
  */
 @Suppress("LongParameterList")
 @Composable
 internal fun CivionDrawerContent(
     state: CivionDrawerState,
+    onAccountSelectorToggle: () -> Unit,
     onAllInboxesClick: () -> Unit,
     onAccountClick: (accountUuid: String) -> Unit,
     onAccountMove: (accountUuid: String, toPosition: Int) -> Unit,
     onAddAccountClick: () -> Unit,
-    onSmartDestinationClick: (SmartDestination) -> Unit,
     onFolderClick: (accountUuid: String, folderId: Long) -> Unit,
+    onSyncAccountClick: () -> Unit,
+    onManageFoldersClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     Surface(
@@ -76,177 +95,362 @@ internal fun CivionDrawerContent(
         Column(
             modifier = Modifier
                 .windowInsetsPadding(WindowInsets.safeDrawing)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = BoltTheme.spacings.default),
+                .padding(horizontal = BoltTheme.spacings.half),
         ) {
-            NavigationDrawerItem(
-                label = "All Inboxes",
-                selected = state.isUnifiedSelected,
-                onClick = onAllInboxesClick,
-                icon = { Icon(imageVector = Icons.Outlined.AllInbox) },
-                badge = { UnreadBadge(state.unifiedUnreadCount) },
+            CurrentAccountHeader(
+                account = state.selectedAccount,
+                isUnified = state.isUnifiedSelected,
+                isOpen = state.isAccountSelectorOpen,
+                onClick = onAccountSelectorToggle,
             )
 
-            AccountSection(
-                state = state,
-                onAccountClick = onAccountClick,
-                onAccountMove = onAccountMove,
-            )
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                if (state.isAccountSelectorOpen) {
+                    AccountSelector(
+                        state = state,
+                        onAllInboxesClick = onAllInboxesClick,
+                        onAccountClick = onAccountClick,
+                        onAccountMove = onAccountMove,
+                        onAddAccountClick = onAddAccountClick,
+                    )
+                } else {
+                    FolderTree(
+                        state = state,
+                        onFolderClick = onFolderClick,
+                    )
 
-            NavigationDrawerItem(
-                label = "Add account",
-                selected = false,
-                onClick = onAddAccountClick,
-                icon = { Icon(imageVector = Icons.Outlined.Add) },
-            )
-
-            DividerHorizontal(modifier = Modifier.padding(vertical = BoltTheme.spacings.default))
-
-            SmartDestination.entries.forEach { destination ->
-                NavigationDrawerItem(
-                    label = destination.label(),
-                    selected = state.selectedShortcut == destination,
-                    onClick = { onSmartDestinationClick(destination) },
-                    icon = { Icon(imageVector = destination.icon()) },
-                )
+                    AccountActions(
+                        hasAccount = state.selectedAccount != null,
+                        onSyncAccountClick = onSyncAccountClick,
+                        onManageFoldersClick = onManageFoldersClick,
+                        onSettingsClick = onSettingsClick,
+                    )
+                }
             }
+        }
+    }
+}
 
-            FolderSection(
-                state = state,
-                onFolderClick = onFolderClick,
+/**
+ * The account you are in, on one line.
+ *
+ * No avatar in front of it: an address is already the thing that identifies an account, and a
+ * generic circle before every one of them says nothing while taking the room the address needs.
+ * A long address is cut with an ellipsis rather than wrapped, so the header keeps its height and
+ * the folders below never move.
+ */
+@Composable
+private fun CurrentAccountHeader(
+    account: DrawerAccount?,
+    isUnified: Boolean,
+    isOpen: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = BoltTheme.spacings.default, vertical = BoltTheme.spacings.default),
+    ) {
+        TextBodyMedium(
+            text = when {
+                isUnified -> "All Inboxes"
+                account != null -> account.email
+                else -> "No account"
+            },
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            color = BoltTheme.colors.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+
+        Icon(
+            imageVector = if (isOpen) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+            tint = BoltTheme.colors.onSurfaceVariant,
+            modifier = Modifier.size(BoltTheme.sizes.iconSmall),
+        )
+    }
+}
+
+/**
+ * Every account, one row each, in the order the user put them in.
+ */
+@Composable
+private fun AccountSelector(
+    state: CivionDrawerState,
+    onAllInboxesClick: () -> Unit,
+    onAccountClick: (accountUuid: String) -> Unit,
+    onAccountMove: (accountUuid: String, toPosition: Int) -> Unit,
+    onAddAccountClick: () -> Unit,
+) {
+    val haptics = LocalHapticFeedback.current
+    val dragState = remember { AccountDragState(state.accounts.map { it.uuid }) }
+    dragState.adoptIfIdle(state.accounts.map { it.uuid })
+
+    if (state.accounts.size > 1) {
+        DrawerRow(
+            label = "All Inboxes",
+            icon = Icons.Outlined.AllInbox,
+            selected = state.isUnifiedSelected,
+            count = state.unifiedUnreadCount,
+            onClick = onAllInboxesClick,
+        )
+    }
+
+    dragState.orderedIds
+        .mapNotNull { uuid -> state.accounts.firstOrNull { it.uuid == uuid } }
+        .forEach { account ->
+            DrawerRow(
+                label = account.email,
+                icon = null,
+                selected = account.uuid == state.selectedAccountUuid && !state.isUnifiedSelected,
+                count = account.unreadCount,
+                onClick = { onAccountClick(account.uuid) },
+                modifier = Modifier
+                    .onSizeChanged { dragState.rowHeight = it.height.toFloat() }
+                    .draggableAccount(account.uuid, dragState, haptics, onAccountMove),
             )
+        }
 
-            DividerHorizontal(modifier = Modifier.padding(vertical = BoltTheme.spacings.default))
+    DrawerRow(
+        label = "Add account",
+        icon = Icons.Outlined.Add,
+        selected = false,
+        count = 0,
+        onClick = onAddAccountClick,
+    )
+}
 
-            NavigationDrawerItem(
-                label = "Settings",
-                selected = false,
-                onClick = onSettingsClick,
-                icon = { Icon(imageVector = Icons.Outlined.Settings) },
+/**
+ * The account's folders, as the server has them.
+ */
+@Composable
+private fun FolderTree(
+    state: CivionDrawerState,
+    onFolderClick: (accountUuid: String, folderId: Long) -> Unit,
+) {
+    val account = state.selectedAccount ?: return
+
+    account.folders.forEach { node ->
+        FolderNode(
+            node = node,
+            level = 0,
+            selectedFolderId = state.selectedFolderId,
+            onFolderClick = { folderId -> onFolderClick(account.uuid, folderId) },
+        )
+    }
+}
+
+/**
+ * One folder, and its children when it is open.
+ *
+ * A folder with children carries a chevron on the left; tapping that opens the branch, tapping
+ * the row opens the folder. The two are separate because a parent folder usually holds mail of
+ * its own, and collapsing it would otherwise be the only way to reach it.
+ */
+@Composable
+private fun FolderNode(
+    node: DrawerFolderNode,
+    level: Int,
+    selectedFolderId: Long?,
+    onFolderClick: (folderId: Long) -> Unit,
+) {
+    var expanded by remember(node.label) { mutableStateOf(level == 0) }
+
+    DrawerRow(
+        label = node.label,
+        iconRes = node.iconRes,
+        selected = node.id != null && node.id == selectedFolderId,
+        count = if (expanded) node.unreadCount else node.totalUnreadCount,
+        indentLevel = level,
+        expandState = if (node.hasChildren) expanded else null,
+        onExpandToggle = { expanded = !expanded },
+        onClick = { node.id?.let(onFolderClick) },
+    )
+
+    if (expanded) {
+        node.children.forEach { child ->
+            FolderNode(
+                node = child,
+                level = level + 1,
+                selectedFolderId = selectedFolderId,
+                onFolderClick = onFolderClick,
             )
         }
     }
 }
 
 /**
- * The accounts, in the order the user put them in.
- *
- * A row is the address and nothing else. Account setup asks for a display name, and it is almost
- * always either the address again or the user's own name repeated down the list; the address is
- * the thing that tells two accounts apart.
+ * What the account itself can be told to do. Kept out of the folder list, and kept present:
+ * these are the mail functions the drawer has always offered and there is no reason to lose them.
  */
 @Composable
-private fun AccountSection(
-    state: CivionDrawerState,
-    onAccountClick: (accountUuid: String) -> Unit,
-    onAccountMove: (accountUuid: String, toPosition: Int) -> Unit,
+private fun AccountActions(
+    hasAccount: Boolean,
+    onSyncAccountClick: () -> Unit,
+    onManageFoldersClick: () -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
-    val haptics = LocalHapticFeedback.current
-    val dragState = remember { AccountDragState(state.accounts.map { it.uuid }) }
-    dragState.adoptIfIdle(state.accounts.map { it.uuid })
+    Column(modifier = Modifier.padding(top = BoltTheme.spacings.double)) {
+        if (hasAccount) {
+            DrawerRow(
+                label = "Sync account",
+                icon = Icons.Outlined.Sync,
+                selected = false,
+                count = 0,
+                onClick = onSyncAccountClick,
+            )
+            DrawerRow(
+                label = "Manage folders",
+                icon = Icons.Outlined.FolderManaged,
+                selected = false,
+                count = 0,
+                onClick = onManageFoldersClick,
+            )
+        }
 
-    val ordered = dragState.orderedIds.mapNotNull { uuid -> state.accounts.firstOrNull { it.uuid == uuid } }
+        DrawerRow(
+            label = "Settings",
+            icon = Icons.Outlined.Settings,
+            selected = false,
+            count = 0,
+            onClick = onSettingsClick,
+        )
+    }
+}
 
-    ordered.forEach { account ->
-        NavigationDrawerItem(
-            label = account.email,
-            selected = account.uuid == state.selectedAccountUuid && !state.isUnifiedSelected,
-            onClick = { onAccountClick(account.uuid) },
-            icon = { Icon(imageVector = Icons.Outlined.AccountCircle) },
-            badge = { UnreadBadge(account.unreadCount) },
-            modifier = Modifier
-                .onSizeChanged { dragState.rowHeight = it.height.toFloat() }
-                .draggableAccount(
-                    accountUuid = account.uuid,
-                    dragState = dragState,
-                    haptics = haptics,
-                    onAccountMove = onAccountMove,
+/**
+ * One row of the drawer.
+ *
+ * Written here rather than taken from the shared components because those draw a Material
+ * navigation item: a tall row with a large filled capsule behind the selected one. The selected
+ * row here is a slightly lighter graphite with a soft corner - present when looked for, quiet
+ * when not - and every row is the same compact height whether it is a folder, an account or an
+ * action.
+ */
+@Suppress("LongParameterList")
+@Composable
+private fun DrawerRow(
+    label: String,
+    selected: Boolean,
+    count: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    iconRes: Int? = null,
+    indentLevel: Int = 0,
+    expandState: Boolean? = null,
+    onExpandToggle: () -> Unit = {},
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(BoltTheme.spacings.default),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 1.dp)
+            .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
+            .background(if (selected) BoltTheme.colors.surfaceContainerHigh else Color.Transparent)
+            .clickable(onClick = onClick)
+            .padding(
+                PaddingValues(
+                    start = BoltTheme.spacings.default + (indentLevel * INDENT_PER_LEVEL_DP).dp,
+                    end = BoltTheme.spacings.default,
                 ),
+            ),
+    ) {
+        RowLeading(
+            expandState = expandState,
+            onExpandToggle = onExpandToggle,
+            icon = icon,
+            iconRes = iconRes,
+            contentColour = rowContentColour(selected),
         )
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .size(height = ROW_HEIGHT_DP.dp, width = 0.dp),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            TextBodyMedium(
+                text = label,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = rowContentColour(selected),
+            )
+        }
+
+        if (count > 0) {
+            TextLabelSmall(
+                text = if (count > MAX_SHOWN_COUNT) "$MAX_SHOWN_COUNT+" else count.toString(),
+                color = BoltTheme.colors.onSurfaceVariant,
+            )
+        }
     }
 }
 
 /**
- * The folders of the account that is open.
+ * What sits before the label: the expand chevron of a folder that has children, and the icon.
  *
- * Inbox is not repeated here: tapping the account itself opens it, which is what the account row
- * is for. Only the folders every account has are offered - the full list, including whatever the
- * user made themselves, lives behind Manage folders, because a drawer that lists two hundred
- * folders is a folder browser and stops being navigation.
+ * The chevron takes its own tap so that opening a branch and opening the folder are separate
+ * actions - a parent folder usually holds mail of its own, and collapsing it would otherwise be
+ * the only way to reach it.
  */
 @Composable
-private fun FolderSection(
-    state: CivionDrawerState,
-    onFolderClick: (accountUuid: String, folderId: Long) -> Unit,
+private fun RowLeading(
+    expandState: Boolean?,
+    onExpandToggle: () -> Unit,
+    icon: ImageVector?,
+    iconRes: Int?,
+    contentColour: Color,
 ) {
-    val account = state.accounts.firstOrNull { it.uuid == state.selectedAccountUuid } ?: return
-    val byType = account.folders.associateBy { it.type }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(BoltTheme.spacings.default),
+    ) {
+        if (expandState != null) {
+            Icon(
+                imageVector = if (expandState) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                tint = BoltTheme.colors.onSurfaceVariant,
+                modifier = Modifier
+                    .size(BoltTheme.sizes.iconSmall)
+                    .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
+                    .clickable(onClick = onExpandToggle),
+            )
+        }
 
-    val folders = DRAWER_FOLDER_ORDER
-        .filter { it != FolderType.INBOX }
-        .mapNotNull { byType[it] }
+        when {
+            iconRes != null -> Image(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(contentColour),
+                modifier = Modifier.size(BoltTheme.sizes.iconSmall),
+            )
 
-    if (folders.isEmpty()) return
-
-    DividerHorizontal(modifier = Modifier.padding(vertical = BoltTheme.spacings.default))
-
-    folders.forEach { folder ->
-        NavigationDrawerItem(
-            label = folder.name,
-            selected = folder.id == state.selectedFolderId && account.uuid == state.selectedAccountUuid,
-            onClick = { onFolderClick(account.uuid, folder.id) },
-            icon = { Icon(imageVector = folder.type.icon()) },
-            badge = { UnreadBadge(folder.unreadCount) },
-        )
+            icon != null -> Icon(
+                imageVector = icon,
+                tint = contentColour,
+                modifier = Modifier.size(BoltTheme.sizes.iconSmall),
+            )
+        }
     }
 }
 
 /**
- * A count, or nothing.
- *
- * Zero is not shown. A row of zeroes is noise, and the absence of a number already says the
- * folder has nothing waiting.
+ * The selected row is marked by its background. Tinting the text as well would make the accent a
+ * second, competing signal on a surface meant to stay calm.
  */
 @Composable
-private fun UnreadBadge(count: Int) {
-    if (count <= 0) return
-
-    TextLabelSmall(
-        text = if (count > MAX_SHOWN_COUNT) "$MAX_SHOWN_COUNT+" else count.toString(),
-        color = BoltTheme.colors.onSurfaceVariant,
-    )
-}
-
-private const val MAX_SHOWN_COUNT = 999
-
-private fun SmartDestination.label(): String = when (this) {
-    SmartDestination.UNREAD -> "Unread"
-    SmartDestination.FLAGGED -> "Flagged"
-    SmartDestination.ATTACHMENTS -> "Attachments"
-}
-
-private fun SmartDestination.icon() = when (this) {
-    SmartDestination.UNREAD -> Icons.Outlined.MarkEmailUnread
-    SmartDestination.FLAGGED -> Icons.Outlined.Star
-    SmartDestination.ATTACHMENTS -> Icons.Outlined.Attachment
-}
-
-private fun FolderType.icon() = when (this) {
-    FolderType.INBOX -> Icons.Outlined.Inbox
-    FolderType.DRAFTS -> Icons.Outlined.Drafts
-    FolderType.SENT -> Icons.Outlined.Send
-    FolderType.ARCHIVE -> Icons.Outlined.Archive
-    FolderType.TRASH -> Icons.Outlined.Delete
-    FolderType.SPAM -> Icons.Outlined.Report
-    else -> Icons.Outlined.Folder
-}
+private fun rowContentColour(selected: Boolean): Color =
+    if (selected) BoltTheme.colors.onSurface else BoltTheme.colors.onSurfaceVariant
 
 /**
  * Long-press and drag an account to reorder it.
  *
- * Carried over from the drawer this replaces, where it lived as a patch in an upstream file. The
- * behaviour is the one that was already accepted; what changed is that it is now in a file
- * Android Mail owns.
+ * The order is the account manager's own, which is where it was already stored, so it survives a
+ * restart without anything here keeping a second copy of it.
  */
 private fun Modifier.draggableAccount(
     accountUuid: String,
