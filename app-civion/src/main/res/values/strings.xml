@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-    <string name="app_name" translatable="false">CIVION Mobile</string>
-    <string name="brand_name" translatable="false">CIVION</string>
+    <!--
+        The product name the user sees, everywhere the user sees one.
+
+        It overrides the same name in the library modules, which is how this build stops
+        presenting itself as the upstream product it is composed from. CIVION belongs to the
+        optional integration, not to the mail client, so it does not appear here.
+    -->
+    <string name="app_name" translatable="false">Android Mail</string>
+    <string name="brand_name" translatable="false">Android Mail</string>
 </resources>

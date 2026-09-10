@@ -67,6 +67,15 @@ function Write-Section([string] $Text) {
     Write-Output "=== $Text"
 }
 
+# Whether a CIVION module is one of the two allowed to name Thunderbird types - either the
+# module itself, or something nested under it.
+function Test-UpstreamFacing([string] $ModuleName, [string[]] $CrossingPoints) {
+    foreach ($crossingPoint in $CrossingPoints) {
+        if ($ModuleName -eq $crossingPoint -or $ModuleName -like "$crossingPoint\*") { return $true }
+    }
+    return $false
+}
+
 # ---------------------------------------------------------------- toolchain ---
 
 if (-not $JavaHome) {
@@ -142,33 +151,11 @@ try {
         'legacy/ui/legacy/build.gradle.kts' =
             'Dependency on feature:civion:navigation, which holds the last-used account and folder.'
         'legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt' =
-            'Records the account and folder on screen, and reopens an account at the folder it was left in; initializeFromLocalSearch and openRealAccount are the only places every navigation path passes through. Also makes Back leave the account last, returning to its Inbox before the unified inbox.'
+            'Constructs Android Mail''s drawer instead of the upstream one - the drawer is built here rather than resolved, so this is the only place it can be substituted, and owning it removed eleven hooks from feature/navigation/drawer/dropdown. Also records the account and folder on screen and reopens an account at the folder it was left in (initializeFromLocalSearch and openRealAccount are the only places every navigation path passes through), and makes Back leave the account last, returning to its Inbox before the unified inbox.'
         'legacy/common/src/main/java/com/fsck/k9/notification/K9NotificationActionCreator.kt' =
             'A notification opens the account it belongs to instead of the unified inbox, so Back returns to that account.'
         'legacy/common/src/main/java/com/fsck/k9/notification/KoinModule.kt' =
             'Follows the constructor change above.'
-        'feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/domain/DomainContract.kt' =
-            'MoveAccount use case contract for drag-and-drop account ordering.'
-        'feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/domain/usecase/MoveAccount.kt' =
-            'Stores the dragged order through the account manager, which already owns account order.'
-        'feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/account/AccountList.kt' =
-            'Long-press drag and drop. The drawer is instantiated directly by MessageHomeActivity, not through Koin, so a CIVION drawer cannot be substituted.'
-        'feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerContent.kt' =
-            'Passes the reorder callback through.'
-        'feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerContract.kt' =
-            'OnAccountMove event.'
-        'feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerViewModel.kt' =
-            'Handles OnAccountMove.'
-        'feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/NavigationDrawerModule.kt' =
-            'Binds MoveAccount.'
-        'feature/navigation/drawer/dropdown/src/debug/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/account/AccountListPreview.kt' =
-            'Follows the AccountList signature.'
-        'feature/navigation/drawer/dropdown/src/test/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerViewModelTest.kt' =
-            'Follows the DrawerViewModel constructor.'
-        'feature/navigation/drawer/dropdown/src/test/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/domain/usecase/FakeLegacyAccountDtoManager.kt' =
-            'Implements getAccounts and moveAccount for MoveAccountTest.'
-        'feature/navigation/drawer/dropdown/src/test/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/domain/usecase/MoveAccountTest.kt' =
-            'Covers MoveAccount.'
         'feature/account/setup/build.gradle.kts' =
             'Dependencies needed to read the existing accounts during setup.'
         'feature/account/setup/src/main/kotlin/app/k9mail/feature/account/setup/domain/usecase/ValidateEmailAddress.kt' =
@@ -266,21 +253,31 @@ try {
         }
     }
 
-    # -------------------------------------------------------- adapter boundary ---
+    # -------------------------------------------------------- upstream boundary ---
 
-    # Thunderbird upstream -> one adapter -> CIVION's own layers.
+    # Thunderbird upstream -> named crossing points -> CIVION's own layers.
     #
     # The footprint above measures what CIVION changed in upstream. This measures the opposite
-    # direction: how far upstream types have travelled into CIVION. Only feature\civion\adapter
-    # may name one. Everything else CIVION owns — UI, storage, navigation and, later,
-    # intelligence — speaks feature\civion\core's types, so an upstream rename or a moved class
-    # stops at the adapter instead of being a change in every consumer.
+    # direction: how far upstream types have travelled into CIVION.
+    #
+    # Two modules may name one, and only two:
+    #
+    #   adapter - resolves engine types and hands them on as feature\civion\core types.
+    #   ui      - screens that replace upstream ones. A replacement has to implement the
+    #             interface the host constructs, render what the engine owns, and use the shared
+    #             theme. Routing that through an adapter would produce a layer whose whole job is
+    #             copying display types, which buys nothing.
+    #
+    # Everything else CIVION owns — core, navigation, integration, brand and whatever storage and
+    # intelligence come later — speaks core's types, so an upstream rename or a moved class stops
+    # at a crossing point instead of being a change in every consumer.
     #
     # app-civion is not scanned: it is the composition layer, and wiring Koin bindings and
     # launching upstream activities is exactly what it is for.
 
-    Write-Section "Adapter boundary"
+    Write-Section "Upstream boundary"
 
+    $upstreamFacing = @("adapter", "ui")
     $upstreamImportRx = '^\s*import\s+(com\.fsck\.k9|net\.thunderbird|app\.k9mail)\.'
     $civionRoot = Join-Path $repositoryRoot "feature\civion"
     $boundaryViolations = @()
@@ -295,7 +292,7 @@ try {
 
     foreach ($module in $modules) {
         $moduleName = $module.FullName.Substring($civionRoot.Length + 1)
-        if ($moduleName -eq "adapter" -or $moduleName -like "adapter\*") { continue }
+        if (Test-UpstreamFacing $moduleName $upstreamFacing) { continue }
 
         # core is a plain JVM module and holds the contracts; it may not reach Android either,
         # or the contracts stop being testable without a device.
@@ -315,15 +312,18 @@ try {
         }
     }
 
-    $scanned = @($modules | ForEach-Object { $_.FullName.Substring($civionRoot.Length + 1) } |
-        Where-Object { $_ -ne "adapter" -and $_ -notlike "adapter\*" })
+    $scanned = @($modules |
+            ForEach-Object { $_.FullName.Substring($civionRoot.Length + 1) } |
+        Where-Object { -not (Test-UpstreamFacing $_ $upstreamFacing) })
+
+    Write-Output ("crossing points    : {0}" -f ($upstreamFacing -join ", "))
     Write-Output ("modules checked    : {0} ({1})" -f $scanned.Count, ($scanned -join ", "))
     Write-Output ("violations         : {0}" -f $boundaryViolations.Count)
 
     if ($boundaryViolations.Count -ne 0) {
         Write-Output ""
         $boundaryViolations | ForEach-Object { Write-Output "  $_" }
-        throw "Thunderbird types reached a CIVION module other than the adapter. Put the upstream call in feature\civion\adapter and hand the result on as a feature\civion\core type. Widening this check defeats the boundary it exists to hold."
+        throw "Thunderbird types reached a CIVION module that is not a crossing point. Put the upstream call in feature\civion\adapter and hand the result on as a feature\civion\core type, or - if it is a screen replacing an upstream one - put it in feature\civion\ui. Adding a third crossing point defeats the boundary it exists to hold."
     }
 
     # ------------------------------------------------------------------ build ---

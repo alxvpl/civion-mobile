@@ -370,6 +370,7 @@ dependencies {
     implementation(projects.core.featureflag)
 
     implementation(projects.feature.civion.adapter)
+    implementation(projects.feature.civion.brand)
     implementation(projects.feature.civion.core)
     "standaloneImplementation"(projects.feature.civion.integration.noop)
     "integratedImplementation"(projects.feature.civion.integration.impl)

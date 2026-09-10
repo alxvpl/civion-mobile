@@ -70,7 +70,6 @@ import net.thunderbird.core.preference.storage.Storage
 import net.thunderbird.feature.account.storage.legacy.mapper.LegacyAccountDataMapper
 import net.thunderbird.feature.funding.api.FundingManager
 import net.thunderbird.feature.navigation.drawer.api.NavigationDrawer
-import net.thunderbird.feature.navigation.drawer.dropdown.DropDownDrawer
 import net.thunderbird.feature.navigation.drawer.dropdown.domain.entity.UnifiedDisplayAccount
 import net.thunderbird.feature.search.legacy.LocalMessageSearch
 import net.thunderbird.feature.search.legacy.SearchAccount
@@ -80,6 +79,7 @@ import net.thunderbird.feature.search.legacy.api.SearchCondition
 import net.thunderbird.feature.search.legacy.serialization.LocalMessageSearchSerializer
 import net.thunderbird.legacy.logging.Log
 import nl.civion.mobile.navigation.CivionNavigationState
+import nl.civion.mobile.ui.drawer.CivionDrawer
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -673,14 +673,23 @@ open class MessageHomeActivity :
         initializeFolderDrawer()
     }
 
+    /**
+     * Android Mail supplies its own drawer.
+     *
+     * The drawer is constructed here rather than resolved, so substituting one is the single
+     * change this file carries for it. [CivionDrawer] implements the same NavigationDrawer
+     * interface and takes the same callbacks, plus [openSearch]: its Unread, Flagged and
+     * Attachments destinations are ordinary saved searches, and this is the method that already
+     * knows how to display one.
+     */
     private fun initializeFolderDrawer() {
-        navigationDrawer = DropDownDrawer(
+        navigationDrawer = CivionDrawer(
             parent = this,
             openAccount = { accountId -> openRealAccount(accountId) },
             openAddAccount = { launchAddAccountScreen() },
             openFolder = { accountId, folderId -> openFolder(accountId, folderId) },
             openUnifiedFolder = { openUnifiedFolders() },
-            openManageFolders = { launchManageFoldersScreen() },
+            openSearch = { search -> actionDisplaySearch(this, search, false, false) },
             openSettings = { SettingsActivity.launch(this) },
             createDrawerListener = { createDrawerListener() },
         )

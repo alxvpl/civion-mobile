@@ -44,16 +44,6 @@ internal interface DomainContract {
         fun interface SyncAllAccounts {
             operator fun invoke(): Flow<Result<Unit>>
         }
-
-        /**
-         * Move an account to [toPosition] in the order the accounts are listed in.
-         *
-         * The position counts real accounts only; the unified account is not one of them and
-         * always stays first.
-         */
-        fun interface MoveAccount {
-            suspend operator fun invoke(accountUuid: String, toPosition: Int)
-        }
     }
 
     interface UnifiedFolderRepository {

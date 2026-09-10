@@ -147,10 +147,12 @@ include(
 include(
     ":feature:civion:acceptance",
     ":feature:civion:adapter",
+    ":feature:civion:brand",
     ":feature:civion:core",
     ":feature:civion:integration:impl",
     ":feature:civion:integration:noop",
     ":feature:civion:navigation",
+    ":feature:civion:ui",
 )
 
 include(

@@ -31,8 +31,8 @@ class ProductIdentityTest {
         get() = GlobalContext.get().get()
 
     @Test
-    fun theApplicationCallsItselfCivionMobile() {
-        assertEquals("CIVION Mobile", appNameProvider.appName)
+    fun theApplicationCallsItselfAndroidMail() {
+        assertEquals("Android Mail", appNameProvider.appName)
     }
 
     /**
@@ -40,14 +40,14 @@ class ProductIdentityTest {
      * than from the binding above, so the two can disagree, and the one the user sees is this.
      */
     @Test
-    fun theLauncherEntryIsLabelledCivionMobile() {
+    fun theLauncherEntryIsLabelledAndroidMail() {
         val context = instrumentation.targetContext
         val packageManager = context.packageManager
         val info = packageManager.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA)
 
         val label = packageManager.getApplicationLabel(info).toString()
 
-        assertEquals("CIVION Mobile", label)
+        assertEquals("Android Mail", label)
     }
 
     /**
@@ -65,11 +65,11 @@ class ProductIdentityTest {
                 .toString(),
         )
 
-        val upstreamNames = listOf("K-9 Mail", "Thunderbird")
+        val otherProductNames = listOf("K-9 Mail", "Thunderbird", "CIVION")
 
-        upstreamNames.forEach { upstream ->
+        otherProductNames.forEach { upstream ->
             assertTrue(
-                "The application presents itself as '$upstream'. It is CIVION Mobile.",
+                "The application presents itself as '$upstream'. It is Android Mail.",
                 names.none { it.contains(upstream, ignoreCase = true) },
             )
         }

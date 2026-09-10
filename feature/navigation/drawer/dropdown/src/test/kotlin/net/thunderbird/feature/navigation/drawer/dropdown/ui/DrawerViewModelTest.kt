@@ -466,7 +466,6 @@ internal class DrawerViewModelTest {
             },
             syncAccount = { syncAccountFlow },
             syncAllAccounts = { syncAllAccounts },
-            moveAccount = { _, _ -> },
         )
     }
 

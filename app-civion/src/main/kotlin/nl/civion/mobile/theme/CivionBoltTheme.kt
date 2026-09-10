@@ -3,8 +3,6 @@ package nl.civion.mobile.theme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import net.thunderbird.components.ui.bolt.resources.Res
-import net.thunderbird.components.ui.bolt.resources.bolt_thunderbird_logo
 import net.thunderbird.components.ui.bolt.theme.BoltTheme
 import net.thunderbird.components.ui.bolt.theme.ThemeColorScheme
 import net.thunderbird.components.ui.bolt.theme.ThemeColorSchemeVariants
@@ -16,6 +14,8 @@ import net.thunderbird.components.ui.bolt.theme.default.defaultThemeShapes
 import net.thunderbird.components.ui.bolt.theme.default.defaultThemeSizes
 import net.thunderbird.components.ui.bolt.theme.default.defaultThemeSpacings
 import net.thunderbird.components.ui.bolt.theme.default.defaultTypography
+import nl.civion.mobile.brand.resources.Res
+import nl.civion.mobile.brand.resources.android_mail_logo
 
 /**
  * CIVION Mobile's own Bolt theme.
@@ -39,7 +39,7 @@ fun CivionBoltTheme(
     content: @Composable () -> Unit,
 ) {
     val images = ThemeImages(
-        logo = Res.drawable.bolt_thunderbird_logo,
+        logo = Res.drawable.android_mail_logo,
     )
 
     BoltTheme(
