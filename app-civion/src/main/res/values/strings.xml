@@ -9,4 +9,14 @@
     -->
     <string name="app_name" translatable="false">Android Mail</string>
     <string name="brand_name" translatable="false">Android Mail</string>
+
+    <!--
+        About, which is the one screen where the upstream product was still named to the user.
+
+        Thunderbird is the mail engine and saying so is both accurate and the right thing to do;
+        what it is not is the name of this product. So the authors line is Android Mail's, and
+        the line under it credits what it is built on.
+    -->
+    <string name="about_app_authors_k9" translatable="false">Android Mail</string>
+    <string name="about_app_authors_thunderbird" translatable="false">Built on Thunderbird for Android</string>
 </resources>

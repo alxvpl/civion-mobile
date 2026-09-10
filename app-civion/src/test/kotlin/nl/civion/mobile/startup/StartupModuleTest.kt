@@ -6,6 +6,8 @@ import kotlin.test.Test
 import net.thunderbird.app.common.startup.DefaultStartupRouter
 import net.thunderbird.app.common.startup.StartupRouter
 import net.thunderbird.core.android.account.LegacyAccountManager
+import net.thunderbird.core.preference.storage.Storage
+import net.thunderbird.core.preference.storage.StorageEditor
 import net.thunderbird.feature.account.settings.api.BackgroundAccountRemover
 import nl.civion.mobile.core.account.CivionAccount
 import nl.civion.mobile.core.account.CivionAccounts
@@ -52,6 +54,8 @@ class StartupModuleTest {
      */
     private val upstreamStandIn = module {
         single<LegacyAccountManager> { mock<LegacyAccountManager>() }
+        single<Storage> { mock<Storage>() }
+        single<StorageEditor> { mock<StorageEditor>() }
         single<BackgroundAccountRemover> { mock<BackgroundAccountRemover>() }
         single<StartupRouter> { DefaultStartupRouter(get(), get()) }
     }
