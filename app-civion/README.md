@@ -1,8 +1,13 @@
-# CIVION Mobile (`app-civion`)
+# Android Mail (`app-civion`)
 
-Third white-label application module of this tree, alongside `app-k9mail` and `app-thunderbird`.
+Third application module of this tree, alongside `app-k9mail` and `app-thunderbird`.
 
-- component: **CIVION Mobile** `0.1.0-alpha` (a build/component artifact identifier, not a CIVION product release)
+The product is **Android Mail**: that is the name in the launcher, in notifications and in
+settings. CIVION is the optional integration it can be built with, not the mail client - which is
+why the module, the package and the application id are still `civion`, and the user never sees any
+of them.
+
+- component: **Android Mail** `0.1.0-alpha` (a build artifact identifier, not a product release)
 - application id: `nl.civion.mobile` (`nl.civion.mobile.debug` for debug builds)
 - composition: `app-civion` → `app-common` → existing Thunderbird/K-9 mail runtime
 - OAuth: CIVION's own Google client, or none. `CivionOAuthConfigurationFactory` builds the Gmail
@@ -13,8 +18,10 @@ Third white-label application module of this tree, alongside `app-k9mail` and `a
 - no telemetry, no funding/billing, no migration-from-other-app features
 - no CIVION domain functionality: no candidate extraction, no Core access, no server, no AI
 
-Engine modules (`legacy:*`, `mail:*`, `backend:*`, `core:*`, `feature:*`) are not modified by this
-module. The only upstream file touched is `settings.gradle.kts`, to register the module.
+`mail:*`, `backend:*` and `core:*` are untouched: the mail engine is Thunderbird's and is not
+patched. Ten upstream files are changed, each recorded with the reason it could not live anywhere
+cheaper - see `$EngineHooks` in `tools/build-civion-mobile.ps1`, which fails the build on anything
+not on that list.
 
 ## Editions
 
@@ -85,7 +92,7 @@ Pass `-Edition integrated` for the other edition; `-Variant release` for a relea
 It is the one build procedure; the self-hosted CI runner calls the same script, so a CI artifact
 and a hand-built one are produced the same way. Output goes to `-OutDir`, else `CIVION_OUT_DIR`,
 else a repository-relative `out\`: the APK as
-`CIVION-Mobile-<version>.<build>-<edition>[-<variant>]-<short sha>.apk`, beside its
+`Android-Mail-<version>.<build>-<edition>[-<variant>]-<short sha>.apk`, beside its
 `BUILD-INFO-*.txt` (edition, build number, commit, tree state, footprint, publication state,
 SHA-256), the Gradle log, `guard-*.txt` and a row in `build-history.csv`.
 
