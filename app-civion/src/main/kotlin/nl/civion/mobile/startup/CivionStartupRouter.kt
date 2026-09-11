@@ -35,9 +35,15 @@ internal class CivionStartupRouter(
     private val accounts: CivionAccounts,
     private val upstream: StartupRouter,
     private val recordedAccountUuid: (Activity) -> String? = CivionNavigationState::lastActiveAccountUuid,
+    private val productDefaults: CivionProductDefaults? = null,
 ) : StartupRouter {
 
     override fun routeToNextScreen(activity: Activity) {
+        // Every start passes through here, which makes it the one place an install is certain
+        // to reach before it shows anything. The defaults apply themselves once per install, so
+        // this costs a lookup on every later start and nothing else.
+        productDefaults?.applyOnce()
+
         val target = selectStartupAccount(
             recordedAccountUuid = recordedAccountUuid(activity),
             usableAccountUuids = accounts.usable().map { it.uuid }.toSet(),

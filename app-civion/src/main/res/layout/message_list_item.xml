@@ -20,9 +20,16 @@
       hanging above the date it sits next to. The paperclip also gets a little more room
       from the date, which it was pressed against.
 
+    - `star` sits on the first line, at the end of the row after `date`, instead of beside
+      the preview. Beside the preview it reserved a 48dp column on every preview line, and
+      with three preview lines that column was the single largest piece of the row that
+      carried no text. The preview now runs to the row's trailing padding. The star's tap
+      area follows it to the first line, so a tap on the end of a preview line opens the
+      message as a tap anywhere else on the text does.
+
   Deliberately not changed: text sizes and text appearances, the preview line count, the
-  vertical padding, the contact picture, and the row density. The row grows only when a
-  subject actually needs the second line.
+  contact picture and its keyline, and the row density. The row grows only when a subject
+  or a preview actually needs the extra line.
 -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -77,18 +84,17 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/messageListDefaultTextViewMargin"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="@dimen/messageListHorizontalPadding"
         android:bufferType="spannable"
         android:lineSpacingMultiplier="@dimen/messageListDefaultLineSpacingMultiplier"
         android:singleLine="false"
         android:textAppearance="?attr/textAppearanceBodyMedium"
         app:layout_constraintBottom_toBottomOf="@+id/bottom_guideline"
-        app:layout_constraintEnd_toStartOf="@+id/star"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/barrier_start"
         app:layout_constraintTop_toTopOf="@+id/barrier_first_line_bottom"
         app:layout_constraintVertical_bias="0.0"
-        app:layout_goneMarginEnd="@dimen/messageListHorizontalPadding"
-        tools:maxLines="2"
+        tools:maxLines="3"
         tools:text="Sender – Message preview text that can span multiple lines. Users can specify in settings how much of that is displayed."
         />
 
@@ -166,12 +172,13 @@
         android:id="@+id/date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/messageListHorizontalPadding"
+        android:layout_marginEnd="8dp"
         android:singleLine="true"
         android:textAppearance="?attr/textAppearanceBodyMedium"
         android:textColor="?attr/colorOnSurfaceVariant"
         app:layout_constraintBaseline_toBaselineOf="@+id/subject"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/star"
+        app:layout_goneMarginEnd="@dimen/messageListHorizontalPadding"
         tools:text="Oct 27"
         />
 
@@ -179,14 +186,12 @@
         android:id="@+id/star"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/fakeAlignImageTopToTextTopPadding"
         android:layout_marginEnd="@dimen/messageListHorizontalPadding"
         android:src="@drawable/btn_select_star"
         android:contentDescription="@string/star_button_description"
-        app:layout_constraintBottom_toBottomOf="@+id/bottom_guideline"
+        app:layout_constraintBottom_toBottomOf="@+id/date"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/preview"
-        app:layout_constraintVertical_bias="0.0"
+        app:layout_constraintTop_toTopOf="@+id/date"
         />
 
     <androidx.constraintlayout.widget.Guideline
@@ -218,7 +223,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:barrierDirection="bottom"
-        app:constraint_referenced_ids="subject,date,thread_count,status,attachment,account_color_chip"
+        app:constraint_referenced_ids="subject,date,star,thread_count,status,attachment,account_color_chip"
         />
 
     <androidx.constraintlayout.widget.Barrier
@@ -243,7 +248,7 @@
         android:id="@+id/star_click_area"
         android:layout_width="48dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/barrier_first_line_bottom"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         />

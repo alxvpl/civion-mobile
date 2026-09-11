@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android Mail override of one message list dimension.
+
+  `messageListDefaultVerticalPadding` is the space above the first line and below the last
+  line of a row at the default density (Settings > Display > Density). Upstream has 12dp; with
+  three preview lines the 24dp a row spends on it was the second largest piece of the row
+  that carried no text. 8dp keeps rows apart without making a list of three-line previews
+  taller than it needs to be. The compact and relaxed densities keep their own values.
+-->
+<resources>
+    <dimen name="messageListDefaultVerticalPadding">8dp</dimen>
+</resources>

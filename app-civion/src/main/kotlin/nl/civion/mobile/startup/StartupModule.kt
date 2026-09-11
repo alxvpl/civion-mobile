@@ -2,6 +2,7 @@ package nl.civion.mobile.startup
 
 import net.thunderbird.app.common.startup.DefaultStartupRouter
 import net.thunderbird.app.common.startup.StartupRouter
+import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 import org.koin.dsl.override
 
@@ -19,6 +20,10 @@ internal val civionStartupRouterOverrideModule = module {
         CivionStartupRouter(
             accounts = get(),
             upstream = DefaultStartupRouter(get(), get()),
+            productDefaults = CivionProductDefaults(
+                context = androidContext(),
+                messageListPreferences = get(),
+            ),
         )
     }.override()
 }

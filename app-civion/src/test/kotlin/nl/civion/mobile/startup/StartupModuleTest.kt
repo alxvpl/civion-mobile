@@ -1,16 +1,19 @@
 package nl.civion.mobile.startup
 
+import android.content.Context
 import assertk.assertThat
 import assertk.assertions.isInstanceOf
 import kotlin.test.Test
 import net.thunderbird.app.common.startup.DefaultStartupRouter
 import net.thunderbird.app.common.startup.StartupRouter
 import net.thunderbird.core.android.account.LegacyAccountManager
+import net.thunderbird.core.preference.display.visualSettings.message.list.MessageListPreferencesManager
 import net.thunderbird.core.preference.storage.Storage
 import net.thunderbird.core.preference.storage.StorageEditor
 import net.thunderbird.feature.account.settings.api.BackgroundAccountRemover
 import nl.civion.mobile.core.account.CivionAccount
 import nl.civion.mobile.core.account.CivionAccounts
+import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import org.mockito.kotlin.mock
@@ -33,6 +36,7 @@ class StartupModuleTest {
     @Test
     fun `should bind the CIVION router over the upstream one`() {
         val koin = koinApplication {
+            androidContext(mock<Context>())
             modules(upstreamStandIn, adapterStandIn, civionStartupRouterOverrideModule)
         }.koin
 
@@ -56,6 +60,7 @@ class StartupModuleTest {
         single<LegacyAccountManager> { mock<LegacyAccountManager>() }
         single<Storage> { mock<Storage>() }
         single<StorageEditor> { mock<StorageEditor>() }
+        single<MessageListPreferencesManager> { mock<MessageListPreferencesManager>() }
         single<BackgroundAccountRemover> { mock<BackgroundAccountRemover>() }
         single<StartupRouter> { DefaultStartupRouter(get(), get()) }
     }
