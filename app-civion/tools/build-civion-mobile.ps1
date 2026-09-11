@@ -563,7 +563,13 @@ try {
         "oauth    : $(if ($Variant -eq 'debug') { 'verified — client id present, signed by the registered certificate' } else { 'n/a' })"
     ) | Set-Content -Path $infoPath -Encoding UTF8
 
-    $ledger = Join-Path $OutDir "build-history.csv"
+    # The ledger lives in _ledger\ under the output directory, one file per edition. Beside the
+    # APKs it was one more file among fifty; and a single file could not hold both editions
+    # without either mixing rows a reader has to filter or, worse, appending rows of this
+    # header to a ledger written with an older one.
+    $ledgerDir = Join-Path $OutDir "_ledger"
+    New-Item -ItemType Directory -Force -Path $ledgerDir | Out-Null
+    $ledger = Join-Path $ledgerDir ("build-history-{0}.csv" -f $Edition)
     if (-not (Test-Path $ledger)) {
         "timestamp,commit,branch,edition,variant,version,build,dirty,builder,sha256,artifact" | Set-Content -Path $ledger -Encoding UTF8
     }

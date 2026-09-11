@@ -87,11 +87,17 @@ jobs:
           # Repository variables, not secrets: an Android OAuth client id is public by
           # construction — the client is bound to package name and signing certificate.
           CIVION_OAUTH_CLIENT_ID_DEBUG: ${{ vars.CIVION_OAUTH_CLIENT_ID_DEBUG }}
-          CIVION_DEBUG_KEYSTORE: ${{ vars.CIVION_DEBUG_KEYSTORE }}
-          # Where artifacts land on this machine. A repository variable, not a path
-          # written into the source: the workspace can move without a commit. Unset
-          # means the script writes to a repository-relative out\.
-          CIVION_OUT_DIR: ${{ vars.CIVION_OUT_DIR }}
+          # The shared debug keystore the registered OAuth client is bound to. Its home is
+          # F:\civion-keys; the repository variable wins when set. A variable naming a path
+          # that no longer exists fails the build at signing, which is the right outcome:
+          # signing with any other key produces an APK Google refuses.
+          CIVION_DEBUG_KEYSTORE: ${{ vars.CIVION_DEBUG_KEYSTORE || 'F:\civion-keys\civion-debug.keystore' }}
+          # Where finished builds land: F:\CIVION\02_BUILDS\mobile, the accepted home of
+          # every release-candidate APK, its BUILD-INFO and the append-only ledger. The
+          # repository variable still wins when set, so the location can move without a
+          # commit; the default lives here rather than in the script because this file
+          # already names this machine's JDK and SDK, and the script names nothing.
+          CIVION_OUT_DIR: ${{ vars.CIVION_OUT_DIR || 'F:\CIVION\02_BUILDS\mobile' }}
         # The runner service executes under NETWORK SERVICE. Use a process-scoped
         # bypass so the trusted repository script can run regardless of that
         # service account's PowerShell execution policy; machine policy is unchanged.
@@ -113,8 +119,15 @@ jobs:
         id: build-integrated
         env:
           CIVION_OAUTH_CLIENT_ID_DEBUG: ${{ vars.CIVION_OAUTH_CLIENT_ID_DEBUG }}
-          CIVION_DEBUG_KEYSTORE: ${{ vars.CIVION_DEBUG_KEYSTORE }}
-          CIVION_OUT_DIR: ${{ vars.CIVION_OUT_DIR }}
+          # The shared debug keystore the registered OAuth client is bound to. Its home is
+          # F:\civion-keys; the repository variable wins when set. A variable naming a path
+          # that no longer exists fails the build at signing, which is the right outcome:
+          # signing with any other key produces an APK Google refuses.
+          CIVION_DEBUG_KEYSTORE: ${{ vars.CIVION_DEBUG_KEYSTORE || 'F:\civion-keys\civion-debug.keystore' }}
+          # Deliberately not the finished-builds folder. This APK exists to prove the
+          # edition boundary from the other side, not to be installed; it goes to the
+          # workspace's own out\ and is discarded with it. The accepted home holds
+          # finished versions only.
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           .\app-civion\tools\build-civion-mobile.ps1 `
