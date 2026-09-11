@@ -102,6 +102,7 @@ internal fun CivionDrawerContent(
                 isUnified = state.isUnifiedSelected,
                 isOpen = state.isAccountSelectorOpen,
                 onClick = onAccountSelectorToggle,
+                onSettingsClick = onSettingsClick,
             )
 
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -119,12 +120,12 @@ internal fun CivionDrawerContent(
                         onFolderClick = onFolderClick,
                     )
 
-                    AccountActions(
-                        hasAccount = state.selectedAccount != null,
-                        onSyncAccountClick = onSyncAccountClick,
-                        onManageFoldersClick = onManageFoldersClick,
-                        onSettingsClick = onSettingsClick,
-                    )
+                    if (state.selectedAccount != null) {
+                        AccountActions(
+                            onSyncAccountClick = onSyncAccountClick,
+                            onManageFoldersClick = onManageFoldersClick,
+                        )
+                    }
                 }
             }
         }
@@ -132,12 +133,16 @@ internal fun CivionDrawerContent(
 }
 
 /**
- * The account you are in, on one line.
+ * The account you are in, on one line, with Settings beside it.
  *
  * No avatar in front of it: an address is already the thing that identifies an account, and a
  * generic circle before every one of them says nothing while taking the room the address needs.
  * A long address is cut with an ellipsis rather than wrapped, so the header keeps its height and
  * the folders below never move.
+ *
+ * Settings sits at the right end of the header, in the top area of the panel together with the
+ * accounts, as accepted for CIVION Mail. It is its own tap; the rest of the row still opens the
+ * account list.
  */
 @Composable
 private fun CurrentAccountHeader(
@@ -145,31 +150,48 @@ private fun CurrentAccountHeader(
     isUnified: Boolean,
     isOpen: Boolean,
     onClick: () -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = BoltTheme.spacings.default, vertical = BoltTheme.spacings.default),
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        TextBodyMedium(
-            text = when {
-                isUnified -> "All Inboxes"
-                account != null -> account.email
-                else -> "No account"
-            },
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            color = BoltTheme.colors.onSurface,
-            modifier = Modifier.weight(1f),
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .weight(1f)
+                .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
+                .clickable(onClick = onClick)
+                .padding(horizontal = BoltTheme.spacings.default, vertical = BoltTheme.spacings.default),
+        ) {
+            TextBodyMedium(
+                text = when {
+                    isUnified -> "All Inboxes"
+                    account != null -> account.email
+                    else -> "No account"
+                },
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = BoltTheme.colors.onSurface,
+                modifier = Modifier.weight(1f),
+            )
+
+            Icon(
+                imageVector = if (isOpen) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                tint = BoltTheme.colors.onSurfaceVariant,
+                modifier = Modifier.size(BoltTheme.sizes.iconSmall),
+            )
+        }
 
         Icon(
-            imageVector = if (isOpen) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+            imageVector = Icons.Outlined.Settings,
+            contentDescription = "Settings",
             tint = BoltTheme.colors.onSurfaceVariant,
-            modifier = Modifier.size(BoltTheme.sizes.iconSmall),
+            modifier = Modifier
+                .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
+                .clickable(onClick = onSettingsClick)
+                .padding(BoltTheme.spacings.default)
+                .size(BoltTheme.sizes.iconSmall),
         )
     }
 }
@@ -285,38 +307,27 @@ private fun FolderNode(
 /**
  * What the account itself can be told to do. Kept out of the folder list, and kept present:
  * these are the mail functions the drawer has always offered and there is no reason to lose them.
+ * Settings is not among them: it lives in the header, with the accounts.
  */
 @Composable
 private fun AccountActions(
-    hasAccount: Boolean,
     onSyncAccountClick: () -> Unit,
     onManageFoldersClick: () -> Unit,
-    onSettingsClick: () -> Unit,
 ) {
     Column(modifier = Modifier.padding(top = BoltTheme.spacings.double)) {
-        if (hasAccount) {
-            DrawerRow(
-                label = "Sync account",
-                icon = Icons.Outlined.Sync,
-                selected = false,
-                count = 0,
-                onClick = onSyncAccountClick,
-            )
-            DrawerRow(
-                label = "Manage folders",
-                icon = Icons.Outlined.FolderManaged,
-                selected = false,
-                count = 0,
-                onClick = onManageFoldersClick,
-            )
-        }
-
         DrawerRow(
-            label = "Settings",
-            icon = Icons.Outlined.Settings,
+            label = "Sync account",
+            icon = Icons.Outlined.Sync,
             selected = false,
             count = 0,
-            onClick = onSettingsClick,
+            onClick = onSyncAccountClick,
+        )
+        DrawerRow(
+            label = "Manage folders",
+            icon = Icons.Outlined.FolderManaged,
+            selected = false,
+            count = 0,
+            onClick = onManageFoldersClick,
         )
     }
 }

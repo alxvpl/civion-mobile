@@ -3,12 +3,17 @@
     <style name="Theme.Civion.Startup" parent="Theme2.Main.Startup" />
 
     <style name="Theme.Civion.Light" parent="Theme2.Thunderbird.Light">
-        <!-- CIVION accent. Used sparingly: selection, primary action, CIVION actions. -->
-        <item name="colorPrimary">#9E1119</item>
+        <!-- CIVION accent: Deep Violet. Used sparingly: selection, primary action, CIVION actions. -->
+        <item name="colorPrimary">#6E56CF</item>
         <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="colorPrimaryContainer">#C62828</item>
+        <item name="colorPrimaryContainer">#7A62DA</item>
         <item name="colorOnPrimaryContainer">#FFFFFF</item>
-        <item name="colorPrimaryInverse">#FFB3AB</item>
+        <item name="colorPrimaryInverse">#C8BAFF</item>
+        <!-- The fixed primary roles carry the same accent: text selection (textColorHighlight) is one of them. -->
+        <item name="colorPrimaryFixed">#E7DFFF</item>
+        <item name="colorOnPrimaryFixed">#200E5E</item>
+        <item name="colorPrimaryFixedDim">#C8BAFF</item>
+        <item name="colorOnPrimaryFixedVariant">#5A45B2</item>
 
         <item name="actionModeCloseDrawable">@drawable/ic_close</item>
         <item name="actionBarPopupTheme">@style/Widget.App.ActionMode.PopupMenu</item>
@@ -50,12 +55,16 @@
     </style>
 
     <style name="Theme.Civion.Dark" parent="Theme2.Thunderbird.Dark">
-        <!-- CIVION accent, lightened for dark surfaces. -->
-        <item name="colorPrimary">#FFB3AB</item>
-        <item name="colorOnPrimary">#67000A</item>
-        <item name="colorPrimaryContainer">#8E1219</item>
-        <item name="colorOnPrimaryContainer">#FFDAD6</item>
-        <item name="colorPrimaryInverse">#9E1119</item>
+        <!-- CIVION accent: Deep Violet, lightened for dark surfaces. -->
+        <item name="colorPrimary">#C8BAFF</item>
+        <item name="colorOnPrimary">#301C80</item>
+        <item name="colorPrimaryContainer">#5A45B2</item>
+        <item name="colorOnPrimaryContainer">#E7DFFF</item>
+        <item name="colorPrimaryInverse">#6E56CF</item>
+        <item name="colorPrimaryFixed">#E7DFFF</item>
+        <item name="colorOnPrimaryFixed">#200E5E</item>
+        <item name="colorPrimaryFixedDim">#C8BAFF</item>
+        <item name="colorOnPrimaryFixedVariant">#5A45B2</item>
 
         <!-- Contrast: secondary text and separators were disappearing into the surface. -->
         <item name="colorOnSurfaceVariant">#D2D3D8</item>

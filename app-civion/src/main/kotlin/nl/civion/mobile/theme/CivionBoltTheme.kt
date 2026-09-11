@@ -26,9 +26,9 @@ import nl.civion.mobile.brand.resources.android_mail_logo
  *
  * Two deliberate decisions:
  *
- *  - **The accent is used sparingly.** CIVION red carries `primary` only — selection, the compose
+ *  - **The accent is used sparingly.** Deep Violet carries `primary` only — selection, the compose
  *    action, CIVION's own actions. Secondary and tertiary roles are neutral, so the interface does
- *    not turn red. `error` is a distinct orange-red, so an error never reads as an accent.
+ *    not turn violet. `error` is a distinct orange-red, so an error never reads as an accent.
  *  - **The dark scheme is the one that had to improve.** Secondary text (`onSurfaceVariant`),
  *    separators (`outlineVariant`) and the steps between surface containers are lifted, because
  *    grey-on-grey was the most common complaint about the inherited dark theme.
@@ -64,10 +64,10 @@ fun CivionBoltTheme(
 }
 
 internal val civionLightColorScheme = ThemeColorScheme(
-    // CIVION red, deep enough to carry white text and to stay calm across a long list.
-    primary = Color(color = 0xFF9E1119),
+    // Deep Violet (#6E56CF), the accepted CIVION Mail accent: carries white text and stays calm across a long list.
+    primary = Color(color = 0xFF6E56CF),
     onPrimary = Color(color = 0xFFFFFFFF),
-    primaryContainer = Color(color = 0xFFC62828),
+    primaryContainer = Color(color = 0xFF7A62DA),
     onPrimaryContainer = Color(color = 0xFFFFFFFF),
 
     // Neutral, so the accent stays rare.
@@ -101,7 +101,7 @@ internal val civionLightColorScheme = ThemeColorScheme(
 
     inverseSurface = Color(color = 0xFF302F2F),
     inverseOnSurface = Color(color = 0xFFF3F0EF),
-    inversePrimary = Color(color = 0xFFFFB3AB),
+    inversePrimary = Color(color = 0xFFC8BAFF),
 
     outline = Color(color = 0xFF6E7074),
     outlineVariant = Color(color = 0xFFBFC1C4),
@@ -125,11 +125,11 @@ internal val civionLightColorScheme = ThemeColorScheme(
 )
 
 internal val civionDarkColorScheme = ThemeColorScheme(
-    // A light tint of the same red: legible on dark without glaring.
-    primary = Color(color = 0xFFFFB3AB),
-    onPrimary = Color(color = 0xFF67000A),
-    primaryContainer = Color(color = 0xFF8E1219),
-    onPrimaryContainer = Color(color = 0xFFFFDAD6),
+    // A light tint of the same violet: legible on dark without glaring.
+    primary = Color(color = 0xFFC8BAFF),
+    onPrimary = Color(color = 0xFF301C80),
+    primaryContainer = Color(color = 0xFF5A45B2),
+    onPrimaryContainer = Color(color = 0xFFE7DFFF),
 
     secondary = Color(color = 0xFFCFC8CA),
     onSecondary = Color(color = 0xFF322E30),
@@ -161,7 +161,7 @@ internal val civionDarkColorScheme = ThemeColorScheme(
 
     inverseSurface = Color(color = 0xFFEAE7E8),
     inverseOnSurface = Color(color = 0xFF303031),
-    inversePrimary = Color(color = 0xFF9E1119),
+    inversePrimary = Color(color = 0xFF6E56CF),
 
     // Separators had to become visible; dividers were disappearing into the surface.
     outline = Color(color = 0xFFA0A1A7),
