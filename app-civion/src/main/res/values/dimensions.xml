@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Android Mail override of one message list dimension.
+  Android Mail overrides of the message list dimensions. Each is used only by the message list
+  row (app-civion/src/main/res/layout/message_list_item.xml), so nothing else moves.
 
-  `messageListDefaultVerticalPadding` is the space above the first line and below the last
-  line of a row at the default density (Settings > Display > Density). Upstream has 12dp; with
-  three preview lines the 24dp a row spends on it was the second largest piece of the row
-  that carried no text. 8dp keeps rows apart without making a list of three-line previews
-  taller than it needs to be. The compact and relaxed densities keep their own values.
+  messageListStartKeyline / messageListHorizontalPadding: the contact picture keeps its 40dp,
+  but sits 12dp from the edge with 12dp to the text instead of 16dp and 16dp, so the text block
+  starts 8dp further left; the same 12dp closes the row on the right. Upstream: 72dp / 16dp.
+
+  messageListDefaultVerticalPadding: the space above the first line and below the last line at
+  the default density (Settings > Display > Density). Upstream has 12dp; with three preview
+  lines the 24dp a row spent on it was the second largest piece of the row that carried no
+  text. The compact and relaxed densities keep their own values.
 -->
 <resources>
+    <dimen name="messageListStartKeyline">64dp</dimen>
+    <dimen name="messageListHorizontalPadding">12dp</dimen>
     <dimen name="messageListDefaultVerticalPadding">8dp</dimen>
 </resources>

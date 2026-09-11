@@ -27,9 +27,18 @@
       area follows it to the first line, so a tap on the end of a preview line opens the
       message as a tap anywhere else on the text does.
 
+    - The contact picture (and the check mark that replaces it in selection) is centred on the
+      row instead of pinned to the top with a 4dp "fake align" margin, so it sits the same way
+      beside a one-line row and a five-line one.
+
+    - The gaps on the first line are 4dp each - subject to thread count to paperclip to date to
+      star - where upstream had 6, 4, 6 and 8, and the star's tap area is 40dp so it ends at
+      the gap before the date rather than over it. The row's own horizontal padding and the
+      contact picture keyline come from app-civion's values/dimensions.xml.
+
   Deliberately not changed: text sizes and text appearances, the preview line count, the
-  contact picture and its keyline, and the row density. The row grows only when a subject
-  or a preview actually needs the extra line.
+  contact picture size, and the row density. The row grows only when a subject or a preview
+  actually needs the extra line.
 -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -52,7 +61,6 @@
         android:layout_width="@dimen/messageListContactPictureSize"
         android:layout_height="@dimen/messageListContactPictureSize"
         android:layout_marginStart="@dimen/messageListHorizontalPadding"
-        android:layout_marginTop="@dimen/fakeAlignImageTopToTextTopPadding"
         android:contentDescription="@null"
         android:background="@drawable/message_list_item_selection_background"
         android:padding="4dp"
@@ -61,7 +69,7 @@
         app:layout_constraintBottom_toTopOf="@+id/bottom_guideline"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/top_guideline"
-        app:layout_constraintVertical_bias="0.0"
+        app:layout_constraintVertical_bias="0.5"
         app:srcCompat="@drawable/ic_check"
         />
 
@@ -70,12 +78,11 @@
         android:layout_width="@dimen/messageListContactPictureSize"
         android:layout_height="@dimen/messageListContactPictureSize"
         android:layout_marginStart="@dimen/messageListHorizontalPadding"
-        android:layout_marginTop="@dimen/fakeAlignImageTopToTextTopPadding"
         android:background="@android:color/transparent"
         app:layout_constraintBottom_toTopOf="@+id/bottom_guideline"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/top_guideline"
-        app:layout_constraintVertical_bias="0.0"
+        app:layout_constraintVertical_bias="0.5"
         tools:src="@drawable/ic_person"
         />
 
@@ -128,7 +135,7 @@
         android:id="@+id/subject"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="6dp"
+        android:layout_marginEnd="4dp"
         android:ellipsize="end"
         android:maxLines="2"
         android:textAppearance="?attr/textAppearanceBodyLarge"
@@ -161,7 +168,7 @@
         android:id="@+id/attachment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="6dp"
+        android:layout_marginEnd="4dp"
         app:layout_constraintBottom_toBottomOf="@+id/date"
         app:layout_constraintEnd_toStartOf="@+id/date"
         app:layout_constraintTop_toTopOf="@+id/date"
@@ -172,7 +179,7 @@
         android:id="@+id/date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="4dp"
         android:singleLine="true"
         android:textAppearance="?attr/textAppearanceBodyMedium"
         android:textColor="?attr/colorOnSurfaceVariant"
@@ -246,7 +253,7 @@
 
     <View
         android:id="@+id/star_click_area"
-        android:layout_width="48dp"
+        android:layout_width="40dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@+id/barrier_first_line_bottom"
         app:layout_constraintEnd_toEndOf="parent"
