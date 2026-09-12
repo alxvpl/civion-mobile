@@ -15,6 +15,30 @@
         <item name="colorPrimaryFixedDim">#C8BAFF</item>
         <item name="colorOnPrimaryFixedVariant">#5A45B2</item>
 
+        <!-- CIVION neutrals, the same values as civionLightColorScheme in CivionBoltTheme.kt, so the
+             classic screens - the message list above all - sit on the surfaces the Compose screens
+             sit on. Secondary is neutral there too, so a selected or active row is grey, not blue. -->
+        <item name="colorSecondary">#4A4749</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="colorSecondaryContainer">#6E696B</item>
+        <item name="colorOnSecondaryContainer">#FFFFFF</item>
+        <item name="colorSurfaceDim">#DDD9D8</item>
+        <item name="colorSurface">#FCFAF9</item>
+        <item name="colorSurfaceBright">#FCFAF9</item>
+        <item name="colorOnSurface">#1B1A1A</item>
+        <item name="colorOnSurfaceVariant">#3F4144</item>
+        <item name="colorSurfaceContainerLowest">#FFFFFF</item>
+        <item name="colorSurfaceContainerLow">#F6F4F3</item>
+        <item name="colorSurfaceContainer">#F1EEEC</item>
+        <item name="colorSurfaceContainerHigh">#EBE8E6</item>
+        <item name="colorSurfaceContainerHighest">#E5E2E0</item>
+        <item name="colorSurfaceVariant">#E5E2E0</item>
+        <item name="colorSurfaceInverse">#302F2F</item>
+        <item name="colorOnSurfaceInverse">#F3F0EF</item>
+        <item name="colorOutline">#6E7074</item>
+        <item name="colorOutlineVariant">#BFC1C4</item>
+        <item name="android:colorBackground">#FCFAF9</item>
+
         <item name="actionModeCloseDrawable">@drawable/ic_close</item>
         <item name="actionBarPopupTheme">@style/Widget.App.ActionMode.PopupMenu</item>
         <item name="toolbarStyle">@style/Widget.App.Toolbar</item>
@@ -66,10 +90,29 @@
         <item name="colorPrimaryFixedDim">#C8BAFF</item>
         <item name="colorOnPrimaryFixedVariant">#5A45B2</item>
 
-        <!-- Contrast: secondary text and separators were disappearing into the surface. -->
+        <!-- CIVION neutrals, the same values as civionDarkColorScheme in CivionBoltTheme.kt: the
+             graphite surfaces, lifted secondary text and visible separators the Compose screens have,
+             now under the classic screens too. Secondary is neutral, so selection is grey, not blue. -->
+        <item name="colorSecondary">#CFC8CA</item>
+        <item name="colorOnSecondary">#322E30</item>
+        <item name="colorSecondaryContainer">#4A4548</item>
+        <item name="colorOnSecondaryContainer">#EDE5E7</item>
+        <item name="colorSurfaceDim">#17181B</item>
+        <item name="colorSurface">#1C1E21</item>
+        <item name="colorSurfaceBright">#34373C</item>
+        <item name="colorOnSurface">#EAE7E8</item>
         <item name="colorOnSurfaceVariant">#D2D3D8</item>
+        <item name="colorSurfaceContainerLowest">#141619</item>
+        <item name="colorSurfaceContainerLow">#212429</item>
+        <item name="colorSurfaceContainer">#262A2F</item>
+        <item name="colorSurfaceContainerHigh">#2E3238</item>
+        <item name="colorSurfaceContainerHighest">#373C43</item>
+        <item name="colorSurfaceVariant">#373C43</item>
+        <item name="colorSurfaceInverse">#EAE7E8</item>
+        <item name="colorOnSurfaceInverse">#303031</item>
         <item name="colorOutline">#A0A1A7</item>
         <item name="colorOutlineVariant">#56595E</item>
+        <item name="android:colorBackground">#1C1E21</item>
 
         <item name="actionModeCloseDrawable">@drawable/ic_close</item>
         <item name="actionBarPopupTheme">@style/Widget.App.ActionMode.PopupMenu</item>

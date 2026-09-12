@@ -11,9 +11,9 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 /**
- * The product default is a starting value, not a rule: applied once per install, through the
+ * The product defaults are starting values, not rules: each applied once per install, through the
  * engine's own preferences manager so the screens see it at once, and never again - so a value
- * the user changes back in Settings is left alone.
+ * the user changes back in Settings is left alone, even when a later default arrives.
  */
 class CivionProductDefaultsTest {
 
@@ -23,36 +23,50 @@ class CivionProductDefaultsTest {
 
     private val defaults = CivionProductDefaults(manager, lazyOf(applied))
 
-    @Test
-    fun `should save three preview lines and remember it on the first run`() {
-        whenever(applied.getBoolean(CivionProductDefaults.KEY_PREVIEW_LINES_APPLIED, false)).thenReturn(false)
+    private fun given(previewApplied: Boolean, backgroundApplied: Boolean, current: DisplayMessageListSettings) {
+        whenever(applied.getBoolean(CivionProductDefaults.KEY_PREVIEW_LINES_APPLIED, false)).thenReturn(previewApplied)
+        whenever(applied.getBoolean(CivionProductDefaults.KEY_UNREAD_BACKGROUND_APPLIED, false))
+            .thenReturn(backgroundApplied)
         whenever(applied.edit()).thenReturn(editor)
         whenever(editor.putBoolean(any(), any())).thenReturn(editor)
-        whenever(manager.getConfig()).thenReturn(DisplayMessageListSettings(previewLines = 2))
+        whenever(manager.getConfig()).thenReturn(current)
+    }
+
+    @Test
+    fun `should apply both defaults and remember them on a fresh install`() {
+        given(previewApplied = false, backgroundApplied = false, current = DisplayMessageListSettings())
 
         defaults.applyOnce()
 
-        verify(manager).save(DisplayMessageListSettings(previewLines = 3))
+        verify(manager).save(DisplayMessageListSettings(previewLines = 3, isUseBackgroundAsUnreadIndicator = true))
         verify(editor).putBoolean(CivionProductDefaults.KEY_PREVIEW_LINES_APPLIED, true)
+        verify(editor).putBoolean(CivionProductDefaults.KEY_UNREAD_BACKGROUND_APPLIED, true)
         verify(editor).apply()
     }
 
     @Test
-    fun `should change nothing but the preview lines`() {
-        whenever(applied.getBoolean(CivionProductDefaults.KEY_PREVIEW_LINES_APPLIED, false)).thenReturn(false)
-        whenever(applied.edit()).thenReturn(editor)
-        whenever(editor.putBoolean(any(), any())).thenReturn(editor)
-        val current = DisplayMessageListSettings(previewLines = 2, isShowContactPicture = false)
-        whenever(manager.getConfig()).thenReturn(current)
+    fun `should change nothing but the defaults`() {
+        val current = DisplayMessageListSettings(isShowContactPicture = false)
+        given(previewApplied = false, backgroundApplied = false, current = current)
 
         defaults.applyOnce()
 
-        verify(manager).save(current.copy(previewLines = 3))
+        verify(manager).save(current.copy(previewLines = 3, isUseBackgroundAsUnreadIndicator = true))
     }
 
     @Test
-    fun `should leave the setting alone once applied`() {
-        whenever(applied.getBoolean(CivionProductDefaults.KEY_PREVIEW_LINES_APPLIED, false)).thenReturn(true)
+    fun `should apply only the default that is new, keeping the user's value for the other`() {
+        val current = DisplayMessageListSettings(previewLines = 2)
+        given(previewApplied = true, backgroundApplied = false, current = current)
+
+        defaults.applyOnce()
+
+        verify(manager).save(current.copy(isUseBackgroundAsUnreadIndicator = true))
+    }
+
+    @Test
+    fun `should leave the settings alone once every default is applied`() {
+        given(previewApplied = true, backgroundApplied = true, current = DisplayMessageListSettings())
 
         defaults.applyOnce()
 

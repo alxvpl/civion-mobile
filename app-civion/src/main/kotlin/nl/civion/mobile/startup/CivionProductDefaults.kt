@@ -37,17 +37,42 @@ internal class CivionProductDefaults(
 
     fun applyOnce() {
         val applied = appliedPreferences.value
-        if (applied.getBoolean(KEY_PREVIEW_LINES_APPLIED, false)) return
+        val previewLinesApplied = applied.getBoolean(KEY_PREVIEW_LINES_APPLIED, false)
+        val unreadBackgroundApplied = applied.getBoolean(KEY_UNREAD_BACKGROUND_APPLIED, false)
+        if (previewLinesApplied && unreadBackgroundApplied) return
 
+        // Each default is applied on its own, so one added later reaches an install that already
+        // has the earlier ones, and a value the user has since changed is not touched again.
         val current = messageListPreferences.getConfig()
-        messageListPreferences.save(current.copy(previewLines = CIVION_PREVIEW_LINES))
+        messageListPreferences.save(
+            current.copy(
+                previewLines = if (previewLinesApplied) current.previewLines else CIVION_PREVIEW_LINES,
+                isUseBackgroundAsUnreadIndicator = if (unreadBackgroundApplied) {
+                    current.isUseBackgroundAsUnreadIndicator
+                } else {
+                    CIVION_UNREAD_BACKGROUND
+                },
+            ),
+        )
 
-        applied.edit().putBoolean(KEY_PREVIEW_LINES_APPLIED, true).apply()
+        applied.edit()
+            .putBoolean(KEY_PREVIEW_LINES_APPLIED, true)
+            .putBoolean(KEY_UNREAD_BACKGROUND_APPLIED, true)
+            .apply()
     }
 
     internal companion object {
         const val PREFERENCES_NAME = "civion_product_defaults"
         const val KEY_PREVIEW_LINES_APPLIED = "preview_lines_applied"
+        const val KEY_UNREAD_BACKGROUND_APPLIED = "unread_background_applied"
+
+        /**
+         * Read and unread rows differ by their background, not only by the weight of the subject.
+         * The engine has this as a setting (Settings > Display > "Use background as unread
+         * indicator"), off by upstream default; the accepted Inbox direction wants message state
+         * visible in the row surface, so it starts on. The colours are the theme's surface tokens.
+         */
+        const val CIVION_UNREAD_BACKGROUND = true
 
         /**
          * How many lines of the row the preview may take. The same text view carries the sender

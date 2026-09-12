@@ -162,9 +162,9 @@ internal fun CivionDrawerContent(
 /**
  * The top of the panel: three actions on a band of their own - Accounts, Add account, Settings.
  *
- * Each is an icon with its name under it, equal in width and at least 48dp tall, so none reads
- * as the incidental control of another. Accounts opens the list of accounts and is marked while
- * that list is showing.
+ * Each is an icon alone, its name being its content description, equal in width and 48dp
+ * tall, so none reads as the incidental control of another and the band stays one row high.
+ * Accounts opens the list of accounts and is marked while that list is showing.
  */
 @Composable
 private fun ActionPanel(
@@ -178,8 +178,7 @@ private fun ActionPanel(
             .fillMaxWidth()
             .padding(top = BoltTheme.spacings.half)
             .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
-            .background(BoltTheme.colors.surfaceContainer)
-            .padding(vertical = BoltTheme.spacings.half),
+            .background(BoltTheme.colors.surfaceContainer),
     ) {
         PanelAction(
             icon = Icons.Outlined.Group,
@@ -215,26 +214,18 @@ private fun PanelAction(
 ) {
     val colour = if (active) BoltTheme.colors.primary else BoltTheme.colors.onSurfaceVariant
 
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = modifier
+            .height(TOP_ICON_TARGET_DP.dp)
             .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
             .clickable(onClick = onClick)
-            .semantics { contentDescription = label }
-            .padding(vertical = BoltTheme.spacings.half),
+            .semantics { contentDescription = label },
     ) {
         Icon(
             imageVector = icon,
             tint = colour,
             modifier = Modifier.size(BoltTheme.sizes.icon),
-        )
-        TextLabelSmall(
-            text = label,
-            color = colour,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = BoltTheme.spacings.quarter),
         )
     }
 }
@@ -248,7 +239,7 @@ private fun CurrentAccountRow(
     account: DrawerAccount?,
     isUnified: Boolean,
 ) {
-    TextBodyMedium(
+    TextTitleMedium(
         text = when {
             isUnified -> "All Inboxes"
             account != null -> account.email
@@ -296,14 +287,14 @@ private fun SecondaryActions(onSyncAccountClick: () -> Unit) {
 private fun SectionLabel(text: String) {
     BasicText(
         text = text,
-        style = BoltTheme.typography.labelSmall.copy(
+        style = BoltTheme.typography.labelMedium.copy(
             color = BoltTheme.colors.onSurfaceVariant,
             letterSpacing = 1.5.sp,
         ),
         modifier = Modifier.padding(
             start = BoltTheme.spacings.default,
-            top = BoltTheme.spacings.double,
-            bottom = BoltTheme.spacings.half,
+            top = BoltTheme.spacings.oneHalf,
+            bottom = BoltTheme.spacings.quarter,
         ),
     )
 }

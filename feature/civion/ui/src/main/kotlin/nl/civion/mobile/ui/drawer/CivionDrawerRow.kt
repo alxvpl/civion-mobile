@@ -36,13 +36,13 @@ import androidx.compose.ui.zIndex
 import kotlin.math.roundToInt
 import net.thunderbird.components.ui.bolt.atom.icon.Icon
 import net.thunderbird.components.ui.bolt.atom.icon.Icons
+import net.thunderbird.components.ui.bolt.atom.text.TextBodyLarge
 import net.thunderbird.components.ui.bolt.atom.text.TextBodyMedium
-import net.thunderbird.components.ui.bolt.atom.text.TextLabelMedium
-import net.thunderbird.components.ui.bolt.atom.text.TextLabelSmall
+import net.thunderbird.components.ui.bolt.atom.text.TextLabelLarge
 import net.thunderbird.components.ui.bolt.theme.BoltTheme
 
-internal const val ROW_HEIGHT_DP = 44
-internal const val SECONDARY_ROW_HEIGHT_DP = 36
+internal const val ROW_HEIGHT_DP = 48
+internal const val SECONDARY_ROW_HEIGHT_DP = 40
 internal const val ROW_CORNER_DP = 8
 internal const val INDENT_PER_LEVEL_DP = 16
 private const val DRAGGED_ITEM_ALPHA = 0.9f
@@ -108,7 +108,7 @@ internal fun DrawerRow(
         }
 
         if (count > 0) {
-            TextLabelSmall(
+            TextLabelLarge(
                 text = if (count > MAX_SHOWN_COUNT) "$MAX_SHOWN_COUNT+" else count.toString(),
                 color = BoltTheme.colors.onSurfaceVariant,
             )
@@ -127,14 +127,14 @@ internal fun DrawerRow(
 @Composable
 private fun RowLabel(label: String, selected: Boolean, secondary: Boolean) {
     if (secondary) {
-        TextLabelMedium(
+        TextBodyMedium(
             text = label,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             color = BoltTheme.colors.onSurfaceVariant,
         )
     } else {
-        TextBodyMedium(
+        TextBodyLarge(
             text = label,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
