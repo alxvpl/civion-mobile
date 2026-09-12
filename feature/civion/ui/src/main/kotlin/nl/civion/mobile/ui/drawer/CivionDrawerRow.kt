@@ -1,18 +1,21 @@
 package nl.civion.mobile.ui.drawer
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -24,50 +27,56 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import kotlin.math.roundToInt
 import net.thunderbird.components.ui.bolt.atom.icon.Icon
 import net.thunderbird.components.ui.bolt.atom.icon.Icons
-import net.thunderbird.components.ui.bolt.atom.text.TextBodyLarge
-import net.thunderbird.components.ui.bolt.atom.text.TextTitleMedium
 import net.thunderbird.components.ui.bolt.theme.BoltTheme
+import androidx.compose.material.icons.Icons as MaterialIcons
 
+/*
+ * The drawer's measurements are the mockup's (civion-mail-mockup, screens 01-02), not Bolt's
+ * spacing scale: a primary row is 48dp with 18dp to the drawer edge, a 24dp icon and 16dp to
+ * the label; the selected row is a pill open on the left, rounded 24dp on the right and stopping
+ * 12dp short of the edge; folder rows under Folders are 44dp, 16sp, and start at 58dp - the
+ * label keyline of the row above - with a 22dp slot for the chevron and 22dp more per level.
+ */
 internal const val ROW_HEIGHT_DP = 48
-internal const val SECONDARY_ROW_HEIGHT_DP = 44
+internal const val SUB_ROW_HEIGHT_DP = 44
 internal const val DRAWER_ROW_TEXT_SP = 18
 internal const val DRAWER_ROW_LINE_SP = 24
-internal const val ROW_CORNER_DP = 8
-internal const val INDENT_PER_LEVEL_DP = 16
+internal const val SUB_ROW_TEXT_SP = 16
+internal const val SECONDARY_ROW_TEXT_SP = 15
+internal const val COUNT_TEXT_SP = 16
+internal const val ROW_EDGE_DP = 18
+internal const val ROW_ICON_DP = 24
+internal const val ROW_GAP_DP = 16
+internal const val SELECTED_END_MARGIN_DP = 12
+internal const val SELECTED_CORNER_DP = 24
+internal const val TRAILING_ICON_DP = 20
+internal const val SUB_ROW_START_DP = 58
+internal const val SUB_ROW_SLOT_DP = 22
+internal const val SUB_ROW_ICON_DP = 18
 private const val DRAGGED_ITEM_ALPHA = 0.9f
 private const val MAX_SHOWN_COUNT = 999
-
-/** Above this the scheme's window is a light surface; below it, a dark one. */
-private const val LIGHT_SURFACE_LUMINANCE = 0.5f
-
-/** The accent as it reads on the selected surface: #5B45B0 on #DCD5EF, #C9BFF2 on #403757. */
-private val AccentOnSelectedLight = Color(color = 0xFF5B45B0)
-private val AccentOnSelectedDark = Color(color = 0xFFC9BFF2)
 
 /**
  * One row of the drawer.
  *
  * Written here rather than taken from the shared components because those draw a Material
  * navigation item: a tall row with a large filled capsule behind the selected one. The selected
- * row here is a slightly lighter graphite with a soft corner - present when looked for, quiet
- * when not - and every row is the same compact height whether it is a folder, an account or an
- * action.
+ * row here is the accepted selected surface as a pill open on the drawer's left edge, with the
+ * accent on its text, icon and count. A row at [indentLevel] 0 is a primary destination; under
+ * Folders the rows are the account's tree, lower and in the smaller type, without an icon.
  */
 @Suppress("LongParameterList")
 @Composable
@@ -78,172 +87,171 @@ internal fun DrawerRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
-    iconRes: Int? = null,
     indentLevel: Int = 0,
     expandState: Boolean? = null,
     onExpandToggle: () -> Unit = {},
     trailingState: Boolean? = null,
-    /** An action about the mail rather than a place in it: lower, in the smaller type, never accented. */
+    /** A marker of what the navigation will hold rather than a place in it: in the second text tone. */
+    muted: Boolean = false,
+    /** Drawn with the accent: the row that manages rather than navigates. */
+    accented: Boolean = false,
+    /** An action about the account rather than a place in it: lower, smaller, set to the right. */
     secondary: Boolean = false,
 ) {
+    val look = rowLook(
+        selected = selected,
+        indentLevel = indentLevel,
+        muted = muted,
+        accented = accented,
+        secondary = secondary,
+    )
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(BoltTheme.spacings.default),
+        horizontalArrangement = if (secondary) Arrangement.End else Arrangement.Start,
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 1.dp)
-            .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
+            .padding(end = SELECTED_END_MARGIN_DP.dp)
+            .clip(RoundedCornerShape(topEnd = SELECTED_CORNER_DP.dp, bottomEnd = SELECTED_CORNER_DP.dp))
             .background(if (selected) BoltTheme.colors.surfaceContainerHighest else Color.Transparent)
             .clickable(onClick = onClick)
-            .padding(
-                PaddingValues(
-                    start = BoltTheme.spacings.default + (indentLevel * INDENT_PER_LEVEL_DP).dp,
-                    end = BoltTheme.spacings.default,
-                ),
-            ),
+            .height(look.height)
+            .padding(start = look.startPadding, end = (ROW_EDGE_DP - SELECTED_END_MARGIN_DP).dp),
     ) {
-        RowLeading(
-            expandState = expandState,
-            onExpandToggle = onExpandToggle,
-            icon = icon,
-            iconRes = iconRes,
-            contentColour = rowContentColour(selected),
-        )
-
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .size(height = (if (secondary) SECONDARY_ROW_HEIGHT_DP else ROW_HEIGHT_DP).dp, width = 0.dp),
-            contentAlignment = Alignment.CenterStart,
-        ) {
-            RowLabel(label = label, selected = selected, secondary = secondary)
+        if (look.sub) {
+            SubRowSlot(
+                expandState = expandState,
+                onExpandToggle = onExpandToggle,
+                icon = icon,
+                colour = look.contentColour,
+            )
+        } else if (icon != null) {
+            Icon(
+                imageVector = icon,
+                tint = look.contentColour,
+                modifier = Modifier.size(if (secondary) TRAILING_ICON_DP.dp else ROW_ICON_DP.dp),
+            )
+            Spacer(modifier = Modifier.width(ROW_GAP_DP.dp))
         }
 
+        BasicText(
+            text = label,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = look.labelStyle,
+            modifier = if (secondary) Modifier else Modifier.weight(1f),
+        )
+
+        RowTrailing(
+            count = count,
+            countColour = if (selected) look.contentColour else text3(),
+            trailingState = trailingState,
+        )
+    }
+}
+
+/** What a row looks like, decided once from what it is. */
+private class RowLook(
+    val sub: Boolean,
+    val height: Dp,
+    val startPadding: Dp,
+    val contentColour: Color,
+    val labelStyle: TextStyle,
+)
+
+@Composable
+private fun rowLook(
+    selected: Boolean,
+    indentLevel: Int,
+    muted: Boolean,
+    accented: Boolean,
+    secondary: Boolean,
+): RowLook {
+    val sub = indentLevel > 0
+    val small = sub || secondary
+    val contentColour = when {
+        selected -> accentOnSelected()
+        accented -> BoltTheme.colors.primary
+        else -> BoltTheme.colors.onSurfaceVariant
+    }
+    // A plain destination reads in the first text tone; everything else takes the row's colour.
+    val plain = !selected && !accented && !muted && !small
+    val labelColour = if (plain) BoltTheme.colors.onSurface else contentColour
+
+    return RowLook(
+        sub = sub,
+        height = (if (small) SUB_ROW_HEIGHT_DP else ROW_HEIGHT_DP).dp,
+        startPadding = if (sub) (SUB_ROW_START_DP + (indentLevel - 1) * SUB_ROW_SLOT_DP).dp else ROW_EDGE_DP.dp,
+        contentColour = contentColour,
+        labelStyle = rowLabelStyle(sub = sub, secondary = secondary, color = labelColour),
+    )
+}
+
+/** After the label: the unread count, and the chevron of the row that unfolds Folders. */
+@Composable
+private fun RowTrailing(
+    count: Int,
+    countColour: Color,
+    trailingState: Boolean?,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         if (count > 0) {
-            TextTitleMedium(
+            BasicText(
                 text = if (count > MAX_SHOWN_COUNT) "$MAX_SHOWN_COUNT+" else count.toString(),
-                color = rowContentColour(selected),
+                style = countTextStyle(countColour),
+                modifier = Modifier.padding(start = ROW_GAP_DP.dp),
             )
         }
 
         if (trailingState != null) {
             Icon(
-                imageVector = if (trailingState) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                imageVector = if (trailingState) Icons.Outlined.ExpandMore else MaterialIcons.Outlined.ChevronRight,
                 tint = BoltTheme.colors.onSurfaceVariant,
-                modifier = Modifier.size(BoltTheme.sizes.iconSmall),
+                modifier = Modifier
+                    .padding(start = ROW_GAP_DP.dp)
+                    .size(TRAILING_ICON_DP.dp),
             )
         }
     }
 }
 
-@Composable
-private fun RowLabel(label: String, selected: Boolean, secondary: Boolean) {
-    if (secondary) {
-        TextBodyLarge(
-            text = label,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            color = BoltTheme.colors.onSurfaceVariant,
-        )
-    } else {
-        BasicText(
-            text = label,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = drawerRowTextStyle(rowContentColour(selected)),
-        )
-    }
-}
-
 /**
- * What sits before the label: the expand chevron of a folder that has children, and the icon.
+ * The 22dp slot before a folder row's label: the chevron of a folder that has children, the icon
+ * of Manage folders, or nothing - so that every label under Folders sits on one keyline.
  *
  * The chevron takes its own tap so that opening a branch and opening the folder are separate
  * actions - a parent folder usually holds mail of its own, and collapsing it would otherwise be
  * the only way to reach it.
  */
 @Composable
-private fun RowLeading(
+private fun SubRowSlot(
     expandState: Boolean?,
     onExpandToggle: () -> Unit,
     icon: ImageVector?,
-    iconRes: Int?,
-    contentColour: Color,
+    colour: Color,
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(BoltTheme.spacings.default),
+    Box(
+        contentAlignment = Alignment.CenterStart,
+        modifier = Modifier.width(SUB_ROW_SLOT_DP.dp),
     ) {
-        if (expandState != null) {
-            Icon(
-                imageVector = if (expandState) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-                tint = BoltTheme.colors.onSurfaceVariant,
-                modifier = Modifier
-                    .size(BoltTheme.sizes.iconSmall)
-                    .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
-                    .clickable(onClick = onExpandToggle),
-            )
-        }
-
         when {
-            iconRes != null -> Image(
-                painter = painterResource(iconRes),
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(contentColour),
-                modifier = Modifier.size(BoltTheme.sizes.iconSmall),
+            expandState != null -> Icon(
+                imageVector = if (expandState) Icons.Outlined.ExpandMore else MaterialIcons.Outlined.ChevronRight,
+                tint = colour,
+                modifier = Modifier
+                    .size(SUB_ROW_ICON_DP.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = onExpandToggle),
             )
 
             icon != null -> Icon(
                 imageVector = icon,
-                tint = contentColour,
-                modifier = Modifier.size(BoltTheme.sizes.iconSmall),
+                tint = colour,
+                modifier = Modifier.size(SUB_ROW_ICON_DP.dp),
             )
         }
     }
 }
-
-/**
- * The selected row: the accepted selected surface behind it, and the accent on its text, icon
- * and count - the one place in the drawer the accent is used.
- */
-@Composable
-private fun rowContentColour(selected: Boolean): Color =
-    if (selected) accentOnSelected() else BoltTheme.colors.onSurfaceVariant
-
-/**
- * The accent as it reads on the selected surface.
- *
- * `primary` is the accent on the drawer's own surface, not on a selected row. Over the accepted
- * selected surfaces it measures 3.80:1 (light) and 3.77:1 (dark), below the 4.5:1 that a drawer
- * row - 18sp regular, normal text - needs. UI canon r002 §2 therefore gives the accent a separate
- * foreground value there: #5B45B0 on #DCD5EF is 5.07:1, #C9BFF2 on #403757 is 6.42:1.
- *
- * Bolt hands the composition a colour scheme rather than a light/dark flag, so the active theme is
- * read off the scheme's own window surface.
- */
-@Composable
-private fun accentOnSelected(): Color =
-    if (BoltTheme.colors.surface.luminance() < LIGHT_SURFACE_LUMINANCE) {
-        AccentOnSelectedDark
-    } else {
-        AccentOnSelectedLight
-    }
-
-/**
- * The drawer's primary row text: 18sp on a 24sp line, in the body face.
- *
- * Bolt's scale steps from bodyLarge (16sp) straight to titleLarge (22sp); the accepted drawer
- * correction of 2026-09-12 needs the row labels visibly larger than 16 without reaching a title
- * size, so this is the one size the drawer adds, derived from bodyLarge and scaling with the
- * user's font size like every other sp value.
- */
-@Composable
-internal fun drawerRowTextStyle(color: Color): TextStyle =
-    BoltTheme.typography.bodyLarge.copy(
-        color = color,
-        fontSize = DRAWER_ROW_TEXT_SP.sp,
-        lineHeight = DRAWER_ROW_LINE_SP.sp,
-    )
 
 /**
  * Long-press and drag an account to reorder it.

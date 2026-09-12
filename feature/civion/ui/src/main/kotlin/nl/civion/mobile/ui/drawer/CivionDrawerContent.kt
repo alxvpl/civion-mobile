@@ -1,13 +1,11 @@
 package nl.civion.mobile.ui.drawer
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -21,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.outlined.Description
@@ -40,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedback
@@ -49,27 +45,39 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import kotlin.math.roundToInt
 import net.thunderbird.components.ui.bolt.atom.Surface
 import net.thunderbird.components.ui.bolt.atom.icon.Icon
 import net.thunderbird.components.ui.bolt.atom.icon.Icons
-import net.thunderbird.components.ui.bolt.atom.text.TextBodyMedium
-import net.thunderbird.components.ui.bolt.atom.text.TextLabelSmall
-import net.thunderbird.components.ui.bolt.atom.text.TextTitleLarge
 import net.thunderbird.components.ui.bolt.theme.BoltTheme
 import androidx.compose.material.icons.Icons as MaterialIcons
 
 private const val DRAWER_WIDTH_FRACTION = 0.85f
 private const val DRAWER_MAX_WIDTH_DP = 400
-private const val AVATAR_SIZE_DP = 40
-private const val TOP_ICON_TARGET_DP = 48
+private const val PANEL_ACTION_DP = 44
+private const val PANEL_ICON_DP = 20
+private const val PANEL_EDGE_DP = 6
+private const val PANEL_TOP_DP = 8
+private const val PANEL_BOTTOM_DP = 2
+private const val ADDRESS_TOP_DP = 6
+private const val ADDRESS_BOTTOM_DP = 14
+private const val ADDRESS_TEXT_SP = 22
+private const val ADDRESS_LINE_SP = 28
+private const val SECTION_TEXT_SP = 11
+private const val SECTION_LINE_SP = 16
+private const val SECTION_TRACKING_EM = 0.13f
+private const val SECTION_TOP_DP = 14
+private const val SECTION_BOTTOM_DP = 6
+private const val RULE_GAP_DP = 6
+private const val FOOT_BOTTOM_DP = 8
 
 /**
  * CIVION Mail's navigation drawer.
@@ -112,9 +120,7 @@ internal fun CivionDrawerContent(
             .width(drawerWidth),
     ) {
         Column(
-            modifier = Modifier
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = BoltTheme.spacings.half),
+            modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
             ActionPanel(
                 isSelectorOpen = state.isAccountSelectorOpen,
@@ -161,11 +167,11 @@ internal fun CivionDrawerContent(
 }
 
 /**
- * The top of the panel: three actions on a band of their own - Accounts, Add account, Settings.
+ * The top of the panel: three actions set to the right - Accounts, Add account, Settings.
  *
- * Each is an icon alone, its name being its content description, equal in width and 48dp
- * tall, so none reads as the incidental control of another and the band stays one row high.
- * Accounts opens the list of accounts and is marked while that list is showing.
+ * Each is an icon alone, its name being its content description, on a 44dp round target with
+ * nothing drawn behind it: the panel is the drawer's own surface, not a band. Accounts opens the
+ * list of accounts and is marked while that list is showing.
  */
 @Composable
 private fun ActionPanel(
@@ -175,32 +181,33 @@ private fun ActionPanel(
     onSettingsClick: () -> Unit,
 ) {
     Row(
+        horizontalArrangement = Arrangement.End,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = BoltTheme.spacings.half)
-            .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
-            .background(BoltTheme.colors.surfaceContainer),
+            .padding(
+                start = PANEL_EDGE_DP.dp,
+                end = PANEL_EDGE_DP.dp,
+                top = PANEL_TOP_DP.dp,
+                bottom = PANEL_BOTTOM_DP.dp,
+            ),
     ) {
         PanelAction(
             icon = Icons.Outlined.Group,
             label = "Accounts",
             active = isSelectorOpen,
             onClick = onAccountsClick,
-            modifier = Modifier.weight(1f),
         )
         PanelAction(
             icon = Icons.Outlined.Add,
             label = "Add account",
             active = false,
             onClick = onAddAccountClick,
-            modifier = Modifier.weight(1f),
         )
         PanelAction(
             icon = Icons.Outlined.Settings,
             label = "Settings",
             active = false,
             onClick = onSettingsClick,
-            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -211,36 +218,36 @@ private fun PanelAction(
     label: String,
     active: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val colour = if (active) BoltTheme.colors.primary else BoltTheme.colors.onSurfaceVariant
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier
-            .height(TOP_ICON_TARGET_DP.dp)
-            .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
+        modifier = Modifier
+            .size(PANEL_ACTION_DP.dp)
+            .clip(CircleShape)
             .clickable(onClick = onClick)
             .semantics { contentDescription = label },
     ) {
         Icon(
             imageVector = icon,
             tint = colour,
-            modifier = Modifier.size(BoltTheme.sizes.icon),
+            modifier = Modifier.size(PANEL_ICON_DP.dp),
         )
     }
 }
 
 /**
  * The account the drawer is in, named by its address and nothing else: context for the rows
- * below, not a control. A long address is cut with an ellipsis rather than wrapped.
+ * below, not a control. 22sp on a 28sp line; a long address is cut with an ellipsis rather
+ * than wrapped.
  */
 @Composable
 private fun CurrentAccountRow(
     account: DrawerAccount?,
     isUnified: Boolean,
 ) {
-    TextTitleLarge(
+    BasicText(
         text = when {
             isUnified -> "All Inboxes"
             account != null -> account.email
@@ -248,24 +255,34 @@ private fun CurrentAccountRow(
         },
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
-        color = BoltTheme.colors.onSurface,
+        style = BoltTheme.typography.bodyLarge.copy(
+            color = BoltTheme.colors.onSurface,
+            fontSize = ADDRESS_TEXT_SP.sp,
+            lineHeight = ADDRESS_LINE_SP.sp,
+            fontWeight = FontWeight.Normal,
+        ),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = BoltTheme.spacings.default, vertical = BoltTheme.spacings.default),
+            .padding(
+                start = ROW_EDGE_DP.dp,
+                end = ROW_EDGE_DP.dp,
+                top = ADDRESS_TOP_DP.dp,
+                bottom = ADDRESS_BOTTOM_DP.dp,
+            ),
     )
 }
 
 /**
  * The bottom of the panel: what the account itself can be told to do. Set apart by a line and
- * set in the smaller type, so it is found when looked for and never read as a destination.
+ * set small and to the right, so it is found when looked for and never read as a destination.
  */
 @Composable
 private fun SecondaryActions(onSyncAccountClick: () -> Unit) {
-    Column(modifier = Modifier.padding(bottom = BoltTheme.spacings.half)) {
+    Column(modifier = Modifier.padding(bottom = FOOT_BOTTOM_DP.dp)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = BoltTheme.spacings.default, vertical = BoltTheme.spacings.half)
+                .padding(horizontal = ROW_EDGE_DP.dp, vertical = RULE_GAP_DP.dp)
                 .height(1.dp)
                 .background(BoltTheme.colors.outlineVariant),
         )
@@ -281,21 +298,24 @@ private fun SecondaryActions(onSyncAccountClick: () -> Unit) {
 }
 
 /**
- * A section label: small capitals, spaced, in the secondary colour. It names the group under
- * it and is not a heading to be read on its own.
+ * A section label: 11sp small capitals, tracked wide, in the third text tone. It names the
+ * group under it and is not a heading to be read on its own.
  */
 @Composable
 private fun SectionLabel(text: String) {
     BasicText(
         text = text,
-        style = BoltTheme.typography.labelLarge.copy(
-            color = BoltTheme.colors.onSurfaceVariant,
-            letterSpacing = 1.5.sp,
+        style = BoltTheme.typography.bodyLarge.copy(
+            color = text3(),
+            fontSize = SECTION_TEXT_SP.sp,
+            lineHeight = SECTION_LINE_SP.sp,
+            fontWeight = FontWeight.Medium,
+            letterSpacing = SECTION_TRACKING_EM.em,
         ),
         modifier = Modifier.padding(
-            start = BoltTheme.spacings.default,
-            top = BoltTheme.spacings.oneHalf,
-            bottom = BoltTheme.spacings.quarter,
+            start = ROW_EDGE_DP.dp,
+            top = SECTION_TOP_DP.dp,
+            bottom = SECTION_BOTTOM_DP.dp,
         ),
     )
 }
@@ -406,10 +426,11 @@ private fun MailSection(
 
                 DrawerRow(
                     label = "Manage folders",
-                    icon = Icons.Outlined.FolderManaged,
+                    icon = Icons.Outlined.Settings,
                     selected = false,
                     count = 0,
                     indentLevel = 1,
+                    accented = true,
                     onClick = onManageFoldersClick,
                 )
             }
@@ -442,6 +463,7 @@ private fun SmartRow(label: String, icon: ImageVector) {
         icon = icon,
         selected = false,
         count = 0,
+        muted = true,
         onClick = {},
     )
 }
@@ -449,9 +471,10 @@ private fun SmartRow(label: String, icon: ImageVector) {
 /**
  * One folder, and its children when it is open.
  *
- * A folder with children carries a chevron on the left; tapping that opens the branch, tapping
- * the row opens the folder. The two are separate because a parent folder usually holds mail of
- * its own, and collapsing it would otherwise be the only way to reach it.
+ * A folder with children carries a chevron in the slot before its label; tapping that opens the
+ * branch, tapping the row opens the folder. The two are separate because a parent folder usually
+ * holds mail of its own, and collapsing it would otherwise be the only way to reach it. The
+ * folder's own icon is not drawn: under Folders every row is a folder, and the indent says where.
  */
 @Composable
 private fun FolderNode(
@@ -464,7 +487,6 @@ private fun FolderNode(
 
     DrawerRow(
         label = node.label,
-        iconRes = node.iconRes,
         selected = node.id != null && node.id == selectedFolderId,
         count = if (expanded) node.unreadCount else node.totalUnreadCount,
         indentLevel = level,
