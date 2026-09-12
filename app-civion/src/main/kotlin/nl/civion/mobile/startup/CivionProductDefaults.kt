@@ -63,7 +63,9 @@ internal class CivionProductDefaults(
 
     internal companion object {
         const val PREFERENCES_NAME = "civion_product_defaults"
-        const val KEY_PREVIEW_LINES_APPLIED = "preview_lines_applied"
+
+        // "_2": the value changed from three lines to two on 2026-09-12, so it is applied once more.
+        const val KEY_PREVIEW_LINES_APPLIED = "preview_lines_applied_2"
         const val KEY_UNREAD_BACKGROUND_APPLIED = "unread_background_applied"
 
         /**
@@ -78,12 +80,10 @@ internal class CivionProductDefaults(
          * How many lines of the row the preview may take. The same text view carries the sender
          * first, so with upstream's two lines about one and a half are message text.
          *
-         * Three: one more than upstream. The accepted Inbox change is that the list should tell
-         * more of the message before it is opened. One extra line is the smallest step that
-         * visibly does that - roughly two and a half lines of message text instead of one and a
-         * half - while a row stays a row and the screen still shows a list. Four and more make
-         * every row tall for the sake of the few messages that fill them.
+         * Two. Three was tried on the owner's phone and made every long message a tall block; the
+         * accepted geometry (2026-09-12) is a bounded row - one subject line and two preview
+         * lines - so the list stays a list. The setting stays a setting.
          */
-        const val CIVION_PREVIEW_LINES = 3
+        const val CIVION_PREVIEW_LINES = 2
     }
 }

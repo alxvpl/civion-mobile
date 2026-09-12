@@ -62,7 +62,7 @@ import net.thunderbird.components.ui.bolt.atom.icon.Icon
 import net.thunderbird.components.ui.bolt.atom.icon.Icons
 import net.thunderbird.components.ui.bolt.atom.text.TextBodyMedium
 import net.thunderbird.components.ui.bolt.atom.text.TextLabelSmall
-import net.thunderbird.components.ui.bolt.atom.text.TextTitleMedium
+import net.thunderbird.components.ui.bolt.atom.text.TextTitleLarge
 import net.thunderbird.components.ui.bolt.theme.BoltTheme
 import androidx.compose.material.icons.Icons as MaterialIcons
 
@@ -84,7 +84,8 @@ private const val TOP_ICON_TARGET_DP = 48
  * classification behind them exists. At the bottom, set apart and set small, are the account's
  * secondary actions.
  *
- * The surface is graphite in both themes: the drawer is a panel beside the mail, not part of it.
+ * The surface follows the theme: white in light, the #212121 window in dark, with the accepted
+ * selected surface and the accent on the selected row.
  */
 @Suppress("LongParameterList")
 @Composable
@@ -105,7 +106,7 @@ internal fun CivionDrawerContent(
     val drawerWidth = (screenWidth * DRAWER_WIDTH_FRACTION).dp.coerceAtMost(DRAWER_MAX_WIDTH_DP.dp)
 
     Surface(
-        color = BoltTheme.colors.surfaceContainerLow,
+        color = BoltTheme.colors.surface,
         modifier = Modifier
             .fillMaxHeight()
             .width(drawerWidth),
@@ -239,7 +240,7 @@ private fun CurrentAccountRow(
     account: DrawerAccount?,
     isUnified: Boolean,
 ) {
-    TextTitleMedium(
+    TextTitleLarge(
         text = when {
             isUnified -> "All Inboxes"
             account != null -> account.email
@@ -287,7 +288,7 @@ private fun SecondaryActions(onSyncAccountClick: () -> Unit) {
 private fun SectionLabel(text: String) {
     BasicText(
         text = text,
-        style = BoltTheme.typography.labelMedium.copy(
+        style = BoltTheme.typography.labelLarge.copy(
             color = BoltTheme.colors.onSurfaceVariant,
             letterSpacing = 1.5.sp,
         ),

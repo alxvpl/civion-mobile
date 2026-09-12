@@ -15,29 +15,32 @@
         <item name="colorPrimaryFixedDim">#C8BAFF</item>
         <item name="colorOnPrimaryFixedVariant">#5A45B2</item>
 
-        <!-- CIVION neutrals, the same values as civionLightColorScheme in CivionBoltTheme.kt, so the
-             classic screens - the message list above all - sit on the surfaces the Compose screens
-             sit on. Secondary is neutral there too, so a selected or active row is grey, not blue. -->
-        <item name="colorSecondary">#4A4749</item>
+        <!-- CIVION neutrals: the accepted light surface system (UI decisions 2026-09-10; values as
+             documented in the colour-system pass of 2026-09-12), the same as civionLightColorScheme
+             in CivionBoltTheme.kt. Window white; list #F1F1F1; group header #F0F0F0; read row
+             #EEEEEE; selected #E6FBFF; text #171717 / #464646; disabled-grade grey #E0E0E0. -->
+        <item name="colorSecondary">#616161</item>
         <item name="colorOnSecondary">#FFFFFF</item>
-        <item name="colorSecondaryContainer">#6E696B</item>
-        <item name="colorOnSecondaryContainer">#FFFFFF</item>
-        <item name="colorSurfaceDim">#DDD9D8</item>
-        <item name="colorSurface">#FCFAF9</item>
-        <item name="colorSurfaceBright">#FCFAF9</item>
-        <item name="colorOnSurface">#1B1A1A</item>
-        <item name="colorOnSurfaceVariant">#3F4144</item>
+        <item name="colorSecondaryContainer">#E0E0E0</item>
+        <item name="colorOnSecondaryContainer">#171717</item>
+        <item name="colorSurfaceDim">#E0E0E0</item>
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorSurfaceBright">#FFFFFF</item>
+        <item name="colorOnSurface">#171717</item>
+        <item name="colorOnSurfaceVariant">#464646</item>
         <item name="colorSurfaceContainerLowest">#FFFFFF</item>
-        <item name="colorSurfaceContainerLow">#F6F4F3</item>
-        <item name="colorSurfaceContainer">#F1EEEC</item>
-        <item name="colorSurfaceContainerHigh">#EBE8E6</item>
-        <item name="colorSurfaceContainerHighest">#E5E2E0</item>
-        <item name="colorSurfaceVariant">#E5E2E0</item>
-        <item name="colorSurfaceInverse">#302F2F</item>
-        <item name="colorOnSurfaceInverse">#F3F0EF</item>
-        <item name="colorOutline">#6E7074</item>
-        <item name="colorOutlineVariant">#BFC1C4</item>
-        <item name="android:colorBackground">#FCFAF9</item>
+        <item name="colorSurfaceContainerLow">#F1F1F1</item>
+        <item name="colorSurfaceContainer">#F0F0F0</item>
+        <item name="colorSurfaceContainerHigh">#EEEEEE</item>
+        <item name="colorSurfaceContainerHighest">#E6FBFF</item>
+        <item name="colorSurfaceVariant">#E6FBFF</item>
+        <item name="colorSurfaceInverse">#212121</item>
+        <item name="colorOnSurfaceInverse">#E0E0E0</item>
+        <!-- The list reads its preview and read-row text through colorOutline: #464646 is the
+             documented preview colour. -->
+        <item name="colorOutline">#464646</item>
+        <item name="colorOutlineVariant">#E0E0E0</item>
+        <item name="android:colorBackground">#FFFFFF</item>
 
         <item name="actionModeCloseDrawable">@drawable/ic_close</item>
         <item name="actionBarPopupTheme">@style/Widget.App.ActionMode.PopupMenu</item>
@@ -79,9 +82,10 @@
     </style>
 
     <style name="Theme.Civion.Dark" parent="Theme2.Thunderbird.Dark">
-        <!-- CIVION accent: Deep Violet, lightened for dark surfaces. -->
-        <item name="colorPrimary">#C8BAFF</item>
-        <item name="colorOnPrimary">#301C80</item>
+        <!-- CIVION accent: Deep Violet is the active colour on dark too (colour-system pass of
+             2026-09-12); the light tint stays the inverse role. -->
+        <item name="colorPrimary">#6E56CF</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
         <item name="colorPrimaryContainer">#5A45B2</item>
         <item name="colorOnPrimaryContainer">#E7DFFF</item>
         <item name="colorPrimaryInverse">#6E56CF</item>
@@ -90,29 +94,31 @@
         <item name="colorPrimaryFixedDim">#C8BAFF</item>
         <item name="colorOnPrimaryFixedVariant">#5A45B2</item>
 
-        <!-- CIVION neutrals, the same values as civionDarkColorScheme in CivionBoltTheme.kt: the
-             graphite surfaces, lifted secondary text and visible separators the Compose screens have,
-             now under the classic screens too. Secondary is neutral, so selection is grey, not blue. -->
-        <item name="colorSecondary">#CFC8CA</item>
-        <item name="colorOnSecondary">#322E30</item>
-        <item name="colorSecondaryContainer">#4A4548</item>
-        <item name="colorOnSecondaryContainer">#EDE5E7</item>
-        <item name="colorSurfaceDim">#17181B</item>
-        <item name="colorSurface">#1C1E21</item>
-        <item name="colorSurfaceBright">#34373C</item>
-        <item name="colorOnSurface">#EAE7E8</item>
-        <item name="colorOnSurfaceVariant">#D2D3D8</item>
-        <item name="colorSurfaceContainerLowest">#141619</item>
-        <item name="colorSurfaceContainerLow">#212429</item>
-        <item name="colorSurfaceContainer">#262A2F</item>
-        <item name="colorSurfaceContainerHigh">#2E3238</item>
-        <item name="colorSurfaceContainerHighest">#373C43</item>
-        <item name="colorSurfaceVariant">#373C43</item>
-        <item name="colorSurfaceInverse">#EAE7E8</item>
-        <item name="colorOnSurfaceInverse">#303031</item>
-        <item name="colorOutline">#A0A1A7</item>
-        <item name="colorOutlineVariant">#56595E</item>
-        <item name="android:colorBackground">#1C1E21</item>
+        <!-- CIVION neutrals: the accepted dark surface ladder (colour-system pass of 2026-09-12), the
+             same as civionDarkColorScheme in CivionBoltTheme.kt. Window #212121 over the layers
+             #080808 / #101010 / #181818; message row #323232; selected #193034; text #FFFFFF /
+             #E0E0E0 / #BDBDBD. -->
+        <item name="colorSecondary">#A6B7BF</item>
+        <item name="colorOnSecondary">#212121</item>
+        <item name="colorSecondaryContainer">#424242</item>
+        <item name="colorOnSecondaryContainer">#FFFFFF</item>
+        <item name="colorSurfaceDim">#151515</item>
+        <item name="colorSurface">#212121</item>
+        <item name="colorSurfaceBright">#323232</item>
+        <item name="colorOnSurface">#FFFFFF</item>
+        <item name="colorOnSurfaceVariant">#E0E0E0</item>
+        <item name="colorSurfaceContainerLowest">#080808</item>
+        <item name="colorSurfaceContainerLow">#101010</item>
+        <item name="colorSurfaceContainer">#181818</item>
+        <item name="colorSurfaceContainerHigh">#323232</item>
+        <item name="colorSurfaceContainerHighest">#193034</item>
+        <item name="colorSurfaceVariant">#193034</item>
+        <item name="colorSurfaceInverse">#E0E0E0</item>
+        <item name="colorOnSurfaceInverse">#212121</item>
+        <!-- Preview and read-row text come through colorOutline: #BDBDBD is the documented meta colour. -->
+        <item name="colorOutline">#BDBDBD</item>
+        <item name="colorOutlineVariant">#424242</item>
+        <item name="android:colorBackground">#212121</item>
 
         <item name="actionModeCloseDrawable">@drawable/ic_close</item>
         <item name="actionBarPopupTheme">@style/Widget.App.ActionMode.PopupMenu</item>

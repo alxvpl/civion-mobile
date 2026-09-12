@@ -38,7 +38,7 @@ class CivionProductDefaultsTest {
 
         defaults.applyOnce()
 
-        verify(manager).save(DisplayMessageListSettings(previewLines = 3, isUseBackgroundAsUnreadIndicator = true))
+        verify(manager).save(DisplayMessageListSettings(previewLines = 2, isUseBackgroundAsUnreadIndicator = true))
         verify(editor).putBoolean(CivionProductDefaults.KEY_PREVIEW_LINES_APPLIED, true)
         verify(editor).putBoolean(CivionProductDefaults.KEY_UNREAD_BACKGROUND_APPLIED, true)
         verify(editor).apply()
@@ -51,12 +51,12 @@ class CivionProductDefaultsTest {
 
         defaults.applyOnce()
 
-        verify(manager).save(current.copy(previewLines = 3, isUseBackgroundAsUnreadIndicator = true))
+        verify(manager).save(current.copy(previewLines = 2, isUseBackgroundAsUnreadIndicator = true))
     }
 
     @Test
     fun `should apply only the default that is new, keeping the user's value for the other`() {
-        val current = DisplayMessageListSettings(previewLines = 2)
+        val current = DisplayMessageListSettings(previewLines = 3)
         given(previewApplied = true, backgroundApplied = false, current = current)
 
         defaults.applyOnce()

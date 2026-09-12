@@ -29,9 +29,10 @@ import nl.civion.mobile.brand.resources.android_mail_logo
  *  - **The accent is used sparingly.** Deep Violet carries `primary` only — selection, the compose
  *    action, CIVION's own actions. Secondary and tertiary roles are neutral, so the interface does
  *    not turn violet. `error` is a distinct orange-red, so an error never reads as an accent.
- *  - **The dark scheme is the one that had to improve.** Secondary text (`onSurfaceVariant`),
- *    separators (`outlineVariant`) and the steps between surface containers are lifted, because
- *    grey-on-grey was the most common complaint about the inherited dark theme.
+ *  - **The neutrals are the accepted CIVION surface system** (colour-system pass of 2026-09-12):
+ *    a white light hierarchy and a layered dark ladder, with #E6FBFF / #193034 as the selected
+ *    surface in the highest container role. The classic theme in values/themes.xml names the
+ *    same values, so both UI layers sit on one grey system.
  */
 @Composable
 fun CivionBoltTheme(
@@ -70,11 +71,11 @@ internal val civionLightColorScheme = ThemeColorScheme(
     primaryContainer = Color(color = 0xFF7A62DA),
     onPrimaryContainer = Color(color = 0xFFFFFFFF),
 
-    // Neutral, so the accent stays rare.
-    secondary = Color(color = 0xFF4A4749),
+    // Neutral, so the accent stays rare: mid grey and the very light grey of the accepted scale.
+    secondary = Color(color = 0xFF616161),
     onSecondary = Color(color = 0xFFFFFFFF),
-    secondaryContainer = Color(color = 0xFF6E696B),
-    onSecondaryContainer = Color(color = 0xFFFFFFFF),
+    secondaryContainer = Color(color = 0xFFE0E0E0),
+    onSecondaryContainer = Color(color = 0xFF171717),
 
     tertiary = Color(color = 0xFF2F4858),
     onTertiary = Color(color = 0xFFFFFFFF),
@@ -87,24 +88,27 @@ internal val civionLightColorScheme = ThemeColorScheme(
     errorContainer = Color(color = 0xFFFFF1E8),
     onErrorContainer = Color(color = 0xFF8A3200),
 
-    surfaceDim = Color(color = 0xFFDDD9D8),
-    surface = Color(color = 0xFFFCFAF9),
-    surfaceBright = Color(color = 0xFFFCFAF9),
-    onSurface = Color(color = 0xFF1B1A1A),
-    onSurfaceVariant = Color(color = 0xFF3F4144),
+    // The accepted light surface system: window white, list #F1F1F1, group header #F0F0F0, read
+    // row #EEEEEE, selected #E6FBFF (the highest container is the selected surface, as in the
+    // classic theme), text #171717 over #464646.
+    surfaceDim = Color(color = 0xFFE0E0E0),
+    surface = Color(color = 0xFFFFFFFF),
+    surfaceBright = Color(color = 0xFFFFFFFF),
+    onSurface = Color(color = 0xFF171717),
+    onSurfaceVariant = Color(color = 0xFF464646),
 
     surfaceContainerLowest = Color(color = 0xFFFFFFFF),
-    surfaceContainerLow = Color(color = 0xFFF6F4F3),
-    surfaceContainer = Color(color = 0xFFF1EEEC),
-    surfaceContainerHigh = Color(color = 0xFFEBE8E6),
-    surfaceContainerHighest = Color(color = 0xFFE5E2E0),
+    surfaceContainerLow = Color(color = 0xFFF1F1F1),
+    surfaceContainer = Color(color = 0xFFF0F0F0),
+    surfaceContainerHigh = Color(color = 0xFFEEEEEE),
+    surfaceContainerHighest = Color(color = 0xFFE6FBFF),
 
-    inverseSurface = Color(color = 0xFF302F2F),
-    inverseOnSurface = Color(color = 0xFFF3F0EF),
+    inverseSurface = Color(color = 0xFF212121),
+    inverseOnSurface = Color(color = 0xFFE0E0E0),
     inversePrimary = Color(color = 0xFFC8BAFF),
 
-    outline = Color(color = 0xFF6E7074),
-    outlineVariant = Color(color = 0xFFBFC1C4),
+    outline = Color(color = 0xFF464646),
+    outlineVariant = Color(color = 0xFFE0E0E0),
 
     scrim = Color.Black,
 
@@ -125,16 +129,16 @@ internal val civionLightColorScheme = ThemeColorScheme(
 )
 
 internal val civionDarkColorScheme = ThemeColorScheme(
-    // A light tint of the same violet: legible on dark without glaring.
-    primary = Color(color = 0xFFC8BAFF),
-    onPrimary = Color(color = 0xFF301C80),
+    // Deep Violet is the active colour on dark as well; the light tint stays the inverse role.
+    primary = Color(color = 0xFF6E56CF),
+    onPrimary = Color(color = 0xFFFFFFFF),
     primaryContainer = Color(color = 0xFF5A45B2),
     onPrimaryContainer = Color(color = 0xFFE7DFFF),
 
-    secondary = Color(color = 0xFFCFC8CA),
-    onSecondary = Color(color = 0xFF322E30),
-    secondaryContainer = Color(color = 0xFF4A4548),
-    onSecondaryContainer = Color(color = 0xFFEDE5E7),
+    secondary = Color(color = 0xFFA6B7BF),
+    onSecondary = Color(color = 0xFF212121),
+    secondaryContainer = Color(color = 0xFF424242),
+    onSecondaryContainer = Color(color = 0xFFFFFFFF),
 
     tertiary = Color(color = 0xFFA8CCE3),
     onTertiary = Color(color = 0xFF0C3243),
@@ -146,26 +150,26 @@ internal val civionDarkColorScheme = ThemeColorScheme(
     errorContainer = Color(color = 0xFF6F2A00),
     onErrorContainer = Color(color = 0xFFFFDBCC),
 
-    surfaceDim = Color(color = 0xFF17181B),
-    surface = Color(color = 0xFF1C1E21),
-    surfaceBright = Color(color = 0xFF34373C),
-    onSurface = Color(color = 0xFFEAE7E8),
-    // Lifted from the inherited value: secondary text was the worst offender in dark.
-    onSurfaceVariant = Color(color = 0xFFD2D3D8),
+    // The accepted dark ladder: #080808 / #101010 / #181818 under the #212121 window, message
+    // row #323232, selected #193034; text #FFFFFF over #E0E0E0 over #BDBDBD.
+    surfaceDim = Color(color = 0xFF151515),
+    surface = Color(color = 0xFF212121),
+    surfaceBright = Color(color = 0xFF323232),
+    onSurface = Color(color = 0xFFFFFFFF),
+    onSurfaceVariant = Color(color = 0xFFE0E0E0),
 
-    surfaceContainerLowest = Color(color = 0xFF141619),
-    surfaceContainerLow = Color(color = 0xFF212429),
-    surfaceContainer = Color(color = 0xFF262A2F),
-    surfaceContainerHigh = Color(color = 0xFF2E3238),
-    surfaceContainerHighest = Color(color = 0xFF373C43),
+    surfaceContainerLowest = Color(color = 0xFF080808),
+    surfaceContainerLow = Color(color = 0xFF101010),
+    surfaceContainer = Color(color = 0xFF181818),
+    surfaceContainerHigh = Color(color = 0xFF323232),
+    surfaceContainerHighest = Color(color = 0xFF193034),
 
-    inverseSurface = Color(color = 0xFFEAE7E8),
-    inverseOnSurface = Color(color = 0xFF303031),
-    inversePrimary = Color(color = 0xFF6E56CF),
+    inverseSurface = Color(color = 0xFFE0E0E0),
+    inverseOnSurface = Color(color = 0xFF212121),
+    inversePrimary = Color(color = 0xFFC8BAFF),
 
-    // Separators had to become visible; dividers were disappearing into the surface.
-    outline = Color(color = 0xFFA0A1A7),
-    outlineVariant = Color(color = 0xFF56595E),
+    outline = Color(color = 0xFFBDBDBD),
+    outlineVariant = Color(color = 0xFF424242),
 
     scrim = Color.Black,
 

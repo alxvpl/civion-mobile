@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -30,19 +31,22 @@ import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import kotlin.math.roundToInt
 import net.thunderbird.components.ui.bolt.atom.icon.Icon
 import net.thunderbird.components.ui.bolt.atom.icon.Icons
 import net.thunderbird.components.ui.bolt.atom.text.TextBodyLarge
-import net.thunderbird.components.ui.bolt.atom.text.TextBodyMedium
-import net.thunderbird.components.ui.bolt.atom.text.TextLabelLarge
+import net.thunderbird.components.ui.bolt.atom.text.TextTitleMedium
 import net.thunderbird.components.ui.bolt.theme.BoltTheme
 
 internal const val ROW_HEIGHT_DP = 48
-internal const val SECONDARY_ROW_HEIGHT_DP = 40
+internal const val SECONDARY_ROW_HEIGHT_DP = 44
+internal const val DRAWER_ROW_TEXT_SP = 18
+internal const val DRAWER_ROW_LINE_SP = 24
 internal const val ROW_CORNER_DP = 8
 internal const val INDENT_PER_LEVEL_DP = 16
 private const val DRAGGED_ITEM_ALPHA = 0.9f
@@ -81,7 +85,7 @@ internal fun DrawerRow(
             .fillMaxWidth()
             .padding(vertical = 1.dp)
             .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
-            .background(if (selected) BoltTheme.colors.surfaceContainerHigh else Color.Transparent)
+            .background(if (selected) BoltTheme.colors.surfaceContainerHighest else Color.Transparent)
             .clickable(onClick = onClick)
             .padding(
                 PaddingValues(
@@ -108,9 +112,9 @@ internal fun DrawerRow(
         }
 
         if (count > 0) {
-            TextLabelLarge(
+            TextTitleMedium(
                 text = if (count > MAX_SHOWN_COUNT) "$MAX_SHOWN_COUNT+" else count.toString(),
-                color = BoltTheme.colors.onSurfaceVariant,
+                color = rowContentColour(selected),
             )
         }
 
@@ -127,18 +131,18 @@ internal fun DrawerRow(
 @Composable
 private fun RowLabel(label: String, selected: Boolean, secondary: Boolean) {
     if (secondary) {
-        TextBodyMedium(
+        TextBodyLarge(
             text = label,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             color = BoltTheme.colors.onSurfaceVariant,
         )
     } else {
-        TextBodyLarge(
+        BasicText(
             text = label,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            color = rowContentColour(selected),
+            style = drawerRowTextStyle(rowContentColour(selected)),
         )
     }
 }
@@ -191,12 +195,28 @@ private fun RowLeading(
 }
 
 /**
- * The selected row is marked by its background. Tinting the text as well would make the accent a
- * second, competing signal on a surface meant to stay calm.
+ * The selected row: the accepted selected surface behind it, and the accent on its text, icon
+ * and count - the one place in the drawer the accent is used.
  */
 @Composable
 private fun rowContentColour(selected: Boolean): Color =
-    if (selected) BoltTheme.colors.onSurface else BoltTheme.colors.onSurfaceVariant
+    if (selected) BoltTheme.colors.primary else BoltTheme.colors.onSurfaceVariant
+
+/**
+ * The drawer's primary row text: 18sp on a 24sp line, in the body face.
+ *
+ * Bolt's scale steps from bodyLarge (16sp) straight to titleLarge (22sp); the accepted drawer
+ * correction of 2026-09-12 needs the row labels visibly larger than 16 without reaching a title
+ * size, so this is the one size the drawer adds, derived from bodyLarge and scaling with the
+ * user's font size like every other sp value.
+ */
+@Composable
+internal fun drawerRowTextStyle(color: Color): TextStyle =
+    BoltTheme.typography.bodyLarge.copy(
+        color = color,
+        fontSize = DRAWER_ROW_TEXT_SP.sp,
+        lineHeight = DRAWER_ROW_LINE_SP.sp,
+    )
 
 /**
  * Long-press and drag an account to reorder it.

@@ -75,10 +75,7 @@ class CivionDrawer(
         observeAccounts()
 
         drawerContent.setContent {
-            // The drawer is graphite whatever the application theme is: it is a navigation surface
-            // beside the mail, not part of the page, and the accepted direction gives it the dark
-            // ground in both themes.
-            themeProvider.WithTheme(darkTheme = true) {
+            themeProvider.WithTheme {
                 val drawerState = state.collectAsStateWithLifecycle()
 
                 CivionDrawerContent(
