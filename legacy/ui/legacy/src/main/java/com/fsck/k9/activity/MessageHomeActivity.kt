@@ -50,7 +50,6 @@ import com.fsck.k9.ui.messageview.MessageViewContainerFragment
 import com.fsck.k9.ui.messageview.MessageViewContainerFragment.MessageViewContainerListener
 import com.fsck.k9.ui.messageview.MessageViewFragment.MessageViewFragmentListener
 import com.fsck.k9.ui.messageview.PlaceholderFragment
-import com.fsck.k9.ui.settings.SettingsActivity
 import com.fsck.k9.view.ViewSwitcher
 import com.fsck.k9.view.ViewSwitcher.OnSwitchCompleteListener
 import com.google.android.material.textview.MaterialTextView
@@ -690,7 +689,6 @@ open class MessageHomeActivity :
             openUnifiedFolder = { openUnifiedFolders() },
             openManageFolders = { launchManageFoldersScreen() },
             syncAccount = { accountUuid -> syncAccount(accountUuid) },
-            openSettings = { SettingsActivity.launch(this) },
             createDrawerListener = { createDrawerListener() },
         )
     }

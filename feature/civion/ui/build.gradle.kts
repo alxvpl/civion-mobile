@@ -23,6 +23,7 @@ dependencies {
     api(projects.feature.navigation.drawer.api)
 
     implementation(projects.core.android.account)
+    implementation(projects.core.preference.api)
     implementation(projects.core.ui.theme.api)
     implementation(projects.feature.mail.account.api)
     implementation(projects.feature.mail.folder.api)

@@ -18,12 +18,14 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import net.thunderbird.core.android.account.LegacyAccountDtoManager
+import net.thunderbird.core.preference.GeneralSettingsManager
+import net.thunderbird.core.preference.display.visualSettings.message.list.MessageListPreferencesManager
 import net.thunderbird.core.ui.theme.api.FeatureThemeProvider
 import net.thunderbird.feature.mail.folder.api.FolderType
 import net.thunderbird.feature.navigation.drawer.api.NavigationDrawer
 import net.thunderbird.feature.navigation.drawer.api.R
-import nl.civion.mobile.ui.accounts.CivionAccountsScreen
-import nl.civion.mobile.ui.screen.CivionScreenOverlay
+import nl.civion.mobile.ui.settings.CivionSettingsModel
+import nl.civion.mobile.ui.settings.CivionSettingsNavigator
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -46,13 +48,15 @@ class CivionDrawer(
     private val openUnifiedFolder: () -> Unit,
     private val openManageFolders: () -> Unit,
     private val syncAccount: (accountUuid: String) -> Unit,
-    private val openSettings: () -> Unit,
     private val openAddAccount: () -> Unit,
     createDrawerListener: () -> DrawerLayout.DrawerListener,
 ) : NavigationDrawer, KoinComponent {
 
     private val themeProvider: FeatureThemeProvider by inject()
     private val accountManager: LegacyAccountDtoManager by inject()
+    private val generalSettingsManager: GeneralSettingsManager by inject()
+    private val messageListPreferencesManager: MessageListPreferencesManager by inject()
+    private val settingsNavigator: CivionSettingsNavigator by inject()
     private val displayFolderRepository: DisplayFolderRepository by inject()
     private val folderNameFormatter: FolderNameFormatter by inject()
 
@@ -65,7 +69,25 @@ class CivionDrawer(
     private val drawerContent: ComposeView = parent.findViewById(R.id.navigation_drawer_content)
 
     private val state = MutableStateFlow(CivionDrawerState())
-    private val screens = CivionScreenOverlay(parent)
+    private val screens = CivionDrawerScreens(
+        parent = parent,
+        themeProvider = themeProvider,
+        drawerState = state,
+        settingsNavigator = settingsNavigator,
+        settingsModel = { onThemeChange ->
+            CivionSettingsModel(
+                accountManager = accountManager,
+                generalSettings = generalSettingsManager,
+                messageListPreferences = messageListPreferencesManager,
+                appVersion = settingsNavigator.appVersion,
+                onThemeChange = onThemeChange,
+            )
+        },
+        openAccount = openAccount,
+        openUnifiedFolder = openUnifiedFolder,
+        openAddAccount = openAddAccount,
+        moveAccount = ::moveAccount,
+    )
 
     init {
         drawer.addDrawerListener(createDrawerListener())
@@ -85,7 +107,7 @@ class CivionDrawer(
                     state = drawerState.value,
                     onAccountsClick = {
                         close()
-                        showAccounts()
+                        screens.showAccounts()
                     },
                     onAllInboxesClick = {
                         close()
@@ -112,7 +134,7 @@ class CivionDrawer(
                     },
                     onSettingsClick = {
                         close()
-                        openSettings()
+                        screens.showSettings()
                     },
                 )
             }
@@ -173,33 +195,6 @@ class CivionDrawer(
         val account = accountManager.getAccount(accountUuid) ?: return
 
         accountManager.moveAccount(account, toPosition)
-    }
-
-    /** The account list (mockup screen 03), over this activity; choosing closes it. */
-    private fun showAccounts() {
-        screens.show {
-            themeProvider.WithTheme {
-                val drawerState = state.collectAsStateWithLifecycle()
-
-                CivionAccountsScreen(
-                    state = drawerState.value,
-                    onBack = screens::hide,
-                    onAllInboxesClick = {
-                        screens.hide()
-                        openUnifiedFolder()
-                    },
-                    onAccountClick = {
-                        screens.hide()
-                        openAccount(it)
-                    },
-                    onAccountMove = ::moveAccount,
-                    onAddAccountClick = {
-                        screens.hide()
-                        openAddAccount()
-                    },
-                )
-            }
-        }
     }
 
     override val isOpen: Boolean
