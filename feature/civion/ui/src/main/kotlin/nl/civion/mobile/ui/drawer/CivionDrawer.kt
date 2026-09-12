@@ -43,9 +43,6 @@ class CivionDrawer(
     private val openFolder: (accountUuid: String, folderId: Long) -> Unit,
     private val openUnifiedFolder: () -> Unit,
     private val openManageFolders: () -> Unit,
-    // Still supplied by the host, no longer offered by the drawer: a manual sync is pull-to-refresh
-    // on the list, which is the same call. Kept so the host hook does not have to change.
-    @Suppress("UnusedPrivateProperty", "unused")
     private val syncAccount: (accountUuid: String) -> Unit,
     private val openSettings: () -> Unit,
     private val openAddAccount: () -> Unit,
@@ -112,6 +109,10 @@ class CivionDrawer(
                     onManageFoldersClick = {
                         close()
                         openManageFolders()
+                    },
+                    onSyncAccountClick = {
+                        close()
+                        state.value.selectedAccountUuid?.let(syncAccount)
                     },
                     onSettingsClick = {
                         close()

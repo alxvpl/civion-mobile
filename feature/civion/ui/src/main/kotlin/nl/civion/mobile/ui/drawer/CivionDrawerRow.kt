@@ -37,10 +37,12 @@ import kotlin.math.roundToInt
 import net.thunderbird.components.ui.bolt.atom.icon.Icon
 import net.thunderbird.components.ui.bolt.atom.icon.Icons
 import net.thunderbird.components.ui.bolt.atom.text.TextBodyMedium
+import net.thunderbird.components.ui.bolt.atom.text.TextLabelMedium
 import net.thunderbird.components.ui.bolt.atom.text.TextLabelSmall
 import net.thunderbird.components.ui.bolt.theme.BoltTheme
 
 internal const val ROW_HEIGHT_DP = 44
+internal const val SECONDARY_ROW_HEIGHT_DP = 36
 internal const val ROW_CORNER_DP = 8
 internal const val INDENT_PER_LEVEL_DP = 16
 private const val DRAGGED_ITEM_ALPHA = 0.9f
@@ -69,6 +71,8 @@ internal fun DrawerRow(
     expandState: Boolean? = null,
     onExpandToggle: () -> Unit = {},
     trailingState: Boolean? = null,
+    /** An action about the mail rather than a place in it: lower, in the smaller type, never accented. */
+    secondary: Boolean = false,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -97,15 +101,10 @@ internal fun DrawerRow(
         Box(
             modifier = Modifier
                 .weight(1f)
-                .size(height = ROW_HEIGHT_DP.dp, width = 0.dp),
+                .size(height = (if (secondary) SECONDARY_ROW_HEIGHT_DP else ROW_HEIGHT_DP).dp, width = 0.dp),
             contentAlignment = Alignment.CenterStart,
         ) {
-            TextBodyMedium(
-                text = label,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = rowContentColour(selected),
-            )
+            RowLabel(label = label, selected = selected, secondary = secondary)
         }
 
         if (count > 0) {
@@ -122,6 +121,25 @@ internal fun DrawerRow(
                 modifier = Modifier.size(BoltTheme.sizes.iconSmall),
             )
         }
+    }
+}
+
+@Composable
+private fun RowLabel(label: String, selected: Boolean, secondary: Boolean) {
+    if (secondary) {
+        TextLabelMedium(
+            text = label,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            color = BoltTheme.colors.onSurfaceVariant,
+        )
+    } else {
+        TextBodyMedium(
+            text = label,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            color = rowContentColour(selected),
+        )
     }
 }
 

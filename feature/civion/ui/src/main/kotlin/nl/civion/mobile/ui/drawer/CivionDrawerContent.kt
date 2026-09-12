@@ -74,14 +74,15 @@ private const val TOP_ICON_TARGET_DP = 48
 /**
  * CIVION Mail's navigation drawer.
  *
- * A navigation surface, not a folder tree. The top area holds the two things that are about the
- * application rather than about mail: the account (its avatar opens the list of accounts, and
- * that list is where a new one is added) and Options. Under MAIL there is the Inbox, which is
- * where mail is read, and a Folders row that unfolds the account's real folder tree only when the
- * user asks for it - the tree is the account's own, nested as the server nests it, and nothing of
- * it is lost; it is just not the first thing on the screen. Under SMART are the four CIVION
- * categories, present now so that the navigation has its shape before the classification behind
- * them exists.
+ * A navigation surface, not a folder tree. At the top is an action panel with the three things
+ * that are about the application rather than about mail - Accounts, Add account, Settings - and
+ * under it the address of the account the drawer is in, as context. Under MAIL there is the
+ * Inbox, which is where mail is read, and a Folders row that unfolds the account's real folder
+ * tree only when the user asks for it - the tree is the account's own, nested as the server nests
+ * it, and nothing of it is lost; it is just not the first thing on the screen. Under SMART are the
+ * four CIVION categories, present now so that the navigation has its shape before the
+ * classification behind them exists. At the bottom, set apart and set small, are the account's
+ * secondary actions.
  *
  * The surface is graphite in both themes: the drawer is a panel beside the mail, not part of it.
  */
@@ -97,6 +98,7 @@ internal fun CivionDrawerContent(
     onFoldersToggle: () -> Unit,
     onFolderClick: (accountUuid: String, folderId: Long) -> Unit,
     onManageFoldersClick: () -> Unit,
+    onSyncAccountClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     val screenWidth = LocalConfiguration.current.screenWidthDp
@@ -113,22 +115,29 @@ internal fun CivionDrawerContent(
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(horizontal = BoltTheme.spacings.half),
         ) {
-            TopArea(
-                account = state.selectedAccount,
-                isUnified = state.isUnifiedSelected,
+            ActionPanel(
                 isSelectorOpen = state.isAccountSelectorOpen,
-                onAvatarClick = onAccountSelectorToggle,
+                onAccountsClick = onAccountSelectorToggle,
+                onAddAccountClick = onAddAccountClick,
                 onSettingsClick = onSettingsClick,
             )
 
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            CurrentAccountRow(
+                account = state.selectedAccount,
+                isUnified = state.isUnifiedSelected,
+            )
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+            ) {
                 if (state.isAccountSelectorOpen) {
                     AccountSelector(
                         state = state,
                         onAllInboxesClick = onAllInboxesClick,
                         onAccountClick = onAccountClick,
                         onAccountMove = onAccountMove,
-                        onAddAccountClick = onAddAccountClick,
                     )
                 } else {
                     MailSection(
@@ -142,111 +151,139 @@ internal fun CivionDrawerContent(
                     SmartSection()
                 }
             }
+
+            if (state.selectedAccount != null && !state.isUnifiedSelected && !state.isAccountSelectorOpen) {
+                SecondaryActions(onSyncAccountClick = onSyncAccountClick)
+            }
         }
     }
 }
 
 /**
- * The top of the panel: the account on the left, Options on the right.
+ * The top of the panel: three actions on a band of their own - Accounts, Add account, Settings.
  *
- * The avatar is the account control - tapping it opens the list of accounts - and the address
- * beside it names the one the drawer is in. Options is its own target at the end of the row,
- * the same size as the avatar, so neither is a small secondary action hidden in the other.
+ * Each is an icon with its name under it, equal in width and at least 48dp tall, so none reads
+ * as the incidental control of another. Accounts opens the list of accounts and is marked while
+ * that list is showing.
  */
 @Composable
-private fun TopArea(
-    account: DrawerAccount?,
-    isUnified: Boolean,
+private fun ActionPanel(
     isSelectorOpen: Boolean,
-    onAvatarClick: () -> Unit,
+    onAccountsClick: () -> Unit,
+    onAddAccountClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(BoltTheme.spacings.default),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = BoltTheme.spacings.half, vertical = BoltTheme.spacings.default),
+            .padding(top = BoltTheme.spacings.half)
+            .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
+            .background(BoltTheme.colors.surfaceContainer)
+            .padding(vertical = BoltTheme.spacings.half),
     ) {
-        AccountAvatar(
-            initial = if (isUnified) "∗" else account?.initial ?: "?",
-            selected = isSelectorOpen,
-            onClick = onAvatarClick,
-        )
-
-        TextBodyMedium(
-            text = when {
-                isUnified -> "All Inboxes"
-                account != null -> account.email
-                else -> "No account"
-            },
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            color = BoltTheme.colors.onSurface,
+        PanelAction(
+            icon = Icons.Outlined.Group,
+            label = "Accounts",
+            active = isSelectorOpen,
+            onClick = onAccountsClick,
             modifier = Modifier.weight(1f),
         )
-
-        TopIconButton(
+        PanelAction(
+            icon = Icons.Outlined.Add,
+            label = "Add account",
+            active = false,
+            onClick = onAddAccountClick,
+            modifier = Modifier.weight(1f),
+        )
+        PanelAction(
             icon = Icons.Outlined.Settings,
-            contentDescription = "Options",
+            label = "Settings",
+            active = false,
             onClick = onSettingsClick,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun PanelAction(
+    icon: ImageVector,
+    label: String,
+    active: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colour = if (active) BoltTheme.colors.primary else BoltTheme.colors.onSurfaceVariant
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier
+            .clip(RoundedCornerShape(ROW_CORNER_DP.dp))
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = label }
+            .padding(vertical = BoltTheme.spacings.half),
+    ) {
+        Icon(
+            imageVector = icon,
+            tint = colour,
+            modifier = Modifier.size(BoltTheme.sizes.icon),
+        )
+        TextLabelSmall(
+            text = label,
+            color = colour,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = BoltTheme.spacings.quarter),
         )
     }
 }
 
 /**
- * A circle with the first letter of the address. It is the account switch: the whole circle is
- * the target, and it takes the accent while the account list it opens is showing.
+ * The account the drawer is in, named by its address and nothing else: context for the rows
+ * below, not a control. A long address is cut with an ellipsis rather than wrapped.
  */
 @Composable
-private fun AccountAvatar(
-    initial: String,
-    selected: Boolean,
-    onClick: () -> Unit,
+private fun CurrentAccountRow(
+    account: DrawerAccount?,
+    isUnified: Boolean,
 ) {
-    Box(
-        contentAlignment = Alignment.Center,
+    TextBodyMedium(
+        text = when {
+            isUnified -> "All Inboxes"
+            account != null -> account.email
+            else -> "No account"
+        },
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        color = BoltTheme.colors.onSurface,
         modifier = Modifier
-            .size(TOP_ICON_TARGET_DP.dp)
-            .clip(CircleShape)
-            .clickable(onClick = onClick)
-            .semantics { contentDescription = "Switch account" },
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(AVATAR_SIZE_DP.dp)
-                .clip(CircleShape)
-                .background(
-                    if (selected) BoltTheme.colors.primary else BoltTheme.colors.primaryContainer,
-                ),
-        ) {
-            TextTitleMedium(
-                text = initial,
-                color = if (selected) BoltTheme.colors.onPrimary else BoltTheme.colors.onPrimaryContainer,
-            )
-        }
-    }
+            .fillMaxWidth()
+            .padding(horizontal = BoltTheme.spacings.default, vertical = BoltTheme.spacings.default),
+    )
 }
 
+/**
+ * The bottom of the panel: what the account itself can be told to do. Set apart by a line and
+ * set in the smaller type, so it is found when looked for and never read as a destination.
+ */
 @Composable
-private fun TopIconButton(
-    icon: ImageVector,
-    contentDescription: String,
-    onClick: () -> Unit,
-) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .size(TOP_ICON_TARGET_DP.dp)
-            .clip(CircleShape)
-            .clickable(onClick = onClick),
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            tint = BoltTheme.colors.onSurfaceVariant,
-            modifier = Modifier.size(BoltTheme.sizes.icon),
+private fun SecondaryActions(onSyncAccountClick: () -> Unit) {
+    Column(modifier = Modifier.padding(bottom = BoltTheme.spacings.half)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = BoltTheme.spacings.default, vertical = BoltTheme.spacings.half)
+                .height(1.dp)
+                .background(BoltTheme.colors.outlineVariant),
+        )
+        DrawerRow(
+            label = "Sync account",
+            icon = Icons.Outlined.Sync,
+            selected = false,
+            count = 0,
+            secondary = true,
+            onClick = onSyncAccountClick,
         )
     }
 }
@@ -273,7 +310,7 @@ private fun SectionLabel(text: String) {
 
 /**
  * Every account, one row each, in the order the user put them in - the address and nothing else.
- * All Inboxes sits above them when there is more than one, and adding an account is the last row.
+ * All Inboxes sits above them when there is more than one. Adding an account is on the panel above.
  */
 @Composable
 private fun AccountSelector(
@@ -281,7 +318,6 @@ private fun AccountSelector(
     onAllInboxesClick: () -> Unit,
     onAccountClick: (accountUuid: String) -> Unit,
     onAccountMove: (accountUuid: String, toPosition: Int) -> Unit,
-    onAddAccountClick: () -> Unit,
 ) {
     val haptics = LocalHapticFeedback.current
     val dragState = remember { AccountDragState(state.accounts.map { it.uuid }) }
@@ -314,14 +350,6 @@ private fun AccountSelector(
                         .draggableAccount(account.uuid, dragState, haptics, onAccountMove),
                 )
             }
-
-        DrawerRow(
-            label = "Add account",
-            icon = Icons.Outlined.Add,
-            selected = false,
-            count = 0,
-            onClick = onAddAccountClick,
-        )
     }
 }
 
