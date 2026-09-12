@@ -87,6 +87,8 @@ class CivionDrawer(
         openUnifiedFolder = openUnifiedFolder,
         openAddAccount = openAddAccount,
         moveAccount = ::moveAccount,
+        openFolder = openFolder,
+        openManageFolders = openManageFolders,
     )
 
     init {
@@ -126,7 +128,7 @@ class CivionDrawer(
                     },
                     onManageFoldersClick = {
                         close()
-                        openManageFolders()
+                        screens.showFolders()
                     },
                     onSyncAccountClick = {
                         close()

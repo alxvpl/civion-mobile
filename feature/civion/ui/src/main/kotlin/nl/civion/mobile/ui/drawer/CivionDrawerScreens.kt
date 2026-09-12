@@ -5,6 +5,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.StateFlow
 import net.thunderbird.core.ui.theme.api.FeatureThemeProvider
 import nl.civion.mobile.ui.accounts.CivionAccountsScreen
+import nl.civion.mobile.ui.folders.CivionFoldersScreen
 import nl.civion.mobile.ui.screen.CivionScreenOverlay
 import nl.civion.mobile.ui.settings.CivionSettingsActions
 import nl.civion.mobile.ui.settings.CivionSettingsModel
@@ -27,6 +28,8 @@ internal class CivionDrawerScreens(
     private val openUnifiedFolder: () -> Unit,
     private val openAddAccount: () -> Unit,
     private val moveAccount: (accountUuid: String, toPosition: Int) -> Unit,
+    private val openFolder: (accountUuid: String, folderId: Long) -> Unit,
+    private val openManageFolders: () -> Unit,
 ) {
     private val overlay = CivionScreenOverlay(parent)
 
@@ -63,6 +66,26 @@ internal class CivionDrawerScreens(
                         overlay.hide()
                         openAddAccount()
                     },
+                )
+            }
+        }
+    }
+
+    /** The account's folders on a screen (mockup 08); opening one closes it. */
+    fun showFolders() {
+        overlay.show {
+            themeProvider.WithTheme {
+                val state = drawerState.collectAsStateWithLifecycle()
+                val account = state.value.selectedAccount
+
+                CivionFoldersScreen(
+                    state = state.value,
+                    onBack = overlay::hide,
+                    onFolderClick = { folderId ->
+                        overlay.hide()
+                        account?.let { openFolder(it.uuid, folderId) }
+                    },
+                    onManageFoldersClick = openManageFolders,
                 )
             }
         }

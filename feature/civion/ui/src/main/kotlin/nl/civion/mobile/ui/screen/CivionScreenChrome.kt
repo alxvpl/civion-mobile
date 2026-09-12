@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.thunderbird.components.ui.bolt.atom.Surface
@@ -150,6 +151,10 @@ internal fun ListRow(
     selected: Boolean = false,
     textColour: Color = BoltTheme.colors.onSurface,
     endColour: Color = text3(),
+    iconColour: Color = BoltTheme.colors.onSurfaceVariant,
+    iconSize: Dp = BoltTheme.sizes.icon,
+    /** Extra space before the content, for a row that sits under another. */
+    indent: Dp = 0.dp,
 ) {
     Column(modifier = modifier) {
         Row(
@@ -160,13 +165,18 @@ internal fun ListRow(
                 .background(if (selected) BoltTheme.colors.surfaceContainerHighest else BoltTheme.colors.surface)
                 .clickable(onClick = onClick)
                 .heightIn(min = LIST_ROW_MIN_HEIGHT_DP.dp)
-                .padding(horizontal = LIST_ROW_EDGE_DP.dp, vertical = LIST_ROW_VERTICAL_DP.dp),
+                .padding(
+                    start = LIST_ROW_EDGE_DP.dp + indent,
+                    end = LIST_ROW_EDGE_DP.dp,
+                    top = LIST_ROW_VERTICAL_DP.dp,
+                    bottom = LIST_ROW_VERTICAL_DP.dp,
+                ),
         ) {
             if (icon != null) {
                 Icon(
                     imageVector = icon,
-                    tint = BoltTheme.colors.onSurfaceVariant,
-                    modifier = Modifier.size(BoltTheme.sizes.icon),
+                    tint = iconColour,
+                    modifier = Modifier.size(iconSize),
                 )
             }
             BasicText(
