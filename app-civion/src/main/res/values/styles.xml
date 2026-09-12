@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Styles CIVION Mail overrides by name (civion-mail-mockup screens 05-06). A style of the same
+  name in the application module wins over the library's, so the compose fields take the
+  mockup's measure without a change to any upstream file: a 14sp label in the third text tone
+  over a 15sp value in the first.
+-->
+<resources>
+    <style name="ComposeTextLabel" parent="@android:style/TextAppearance.Medium">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/civion_text3</item>
+    </style>
+
+    <style name="ComposeEditText" parent="@android:style/TextAppearance.Medium">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:textColorHint">@color/civion_text3</item>
+    </style>
+
+    <style name="RecipientEditText" parent="ComposeEditText">
+        <item name="android:lineSpacingExtra">4dp</item>
+    </style>
+</resources>

@@ -71,7 +71,8 @@
 
         <item name="contactPictureFallbackDefaultBackgroundColor">#ffababab</item>
         <item name="contactPictureFallbackBackgroundColors">@array/contact_picture_fallback_background_colors_light</item>
-        <item name="contactTokenBackgroundColor">#ccc</item>
+        <!-- Recipient pills sit on the secondary container (mockup screens 05-06). -->
+        <item name="contactTokenBackgroundColor">#E4DEF7</item>
         <item name="tintColorBulletPointPositive">#77aa22</item>
         <item name="tintColorBulletPointNegative">#dd2222</item>
         <item name="tintColorBulletPointNeutral">#888</item>
@@ -151,7 +152,8 @@
         <item name="messageListSwipeSpamColor">@color/material_red_800</item>
         <item name="messageListSwipeMoveColor">@color/material_purple_600</item>
 
-        <item name="contactTokenBackgroundColor">#313131</item>
+        <!-- Recipient pills sit on the secondary container (mockup screens 05-06). -->
+        <item name="contactTokenBackgroundColor">#453C63</item>
         <item name="contactPictureFallbackDefaultBackgroundColor">#ff606060</item>
         <item name="contactPictureFallbackBackgroundColors">@array/contact_picture_fallback_background_colors_dark</item>
         <item name="tintColorBulletPointPositive">#77aa22</item>

@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CIVION Mail override of the compose content (civion-mail-mockup screens 05-06).
+
+  A resource of this name in the application module wins over the one in legacy/ui/legacy, and
+  every id and view class the compose activity looks up is unchanged. The subject becomes a field
+  like the ones above it - a 56dp label column and one line of value on a 52dp row - the body
+  reads at 15sp on a 1.62 line with 16dp to the edge, and the quoted text of a reply sits behind
+  a chip, under a rule of its own, with a line down its left and the text set quieter.
+
+  The background is set explicitly because this layout may be inflated with a theme other than
+  the application's (the composer theme setting).
+-->
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:attr/windowBackground"
+    android:fillViewport="true"
+    android:scrollbarStyle="insideOverlay"
+    >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        >
+
+        <include layout="@layout/message_compose_recipients" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:background="?attr/colorSurface"
+            android:gravity="center_vertical"
+            android:minHeight="52dp"
+            android:orientation="horizontal"
+            >
+
+            <com.google.android.material.textview.MaterialTextView
+                style="@style/ComposeTextLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:labelFor="@+id/subject"
+                android:minWidth="56dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="8dp"
+                android:text="@string/message_compose_subject_hint"
+                tools:ignore="RtlSymmetry"
+                />
+
+            <EditText
+                android:id="@+id/subject"
+                style="@style/ComposeEditText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:imeOptions="actionNext|flagNoExtractUi|flagNoPersonalizedLearning"
+                android:inputType="textEmailSubject|textAutoCorrect|textCapSentences"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:singleLine="true"
+                />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?attr/colorOutlineVariant"
+            />
+
+        <!-- We have to use "wrap_content" (not "0dip") for "layout_height", otherwise the
+             EditText won't properly grow in height while the user is typing the message -->
+        <EditText
+            android:id="@+id/message_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:gravity="top"
+            android:hint="@string/message_compose_content_hint"
+            android:imeOptions="actionDone|flagNoEnterAction|flagNoExtractUi|flagNoPersonalizedLearning"
+            android:inputType="textMultiLine|textAutoCorrect|textCapSentences"
+            android:lineSpacingMultiplier="1.3"
+            android:minLines="3"
+            android:paddingStart="16dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp"
+            android:textColor="?attr/colorOnSurface"
+            android:textColorHint="@color/civion_text3"
+            android:textSize="15sp"
+            tools:ignore="InefficientWeight"
+            />
+
+        <EditText
+            android:id="@+id/upper_signature"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:gravity="top"
+            android:hint="@string/message_compose_signature_hint"
+            android:imeOptions="flagNoExtractUi|flagNoPersonalizedLearning"
+            android:inputType="textMultiLine|textAutoCorrect|textCapSentences"
+            android:minLines="0"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:textColor="@color/civion_text3"
+            android:textSize="13.5sp"
+            />
+
+        <com.fsck.k9.view.MessageWebView
+            android:id="@+id/upper_signature_html_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            />
+
+        <!-- The quoted text of a reply, behind a chip; the activity shows the one or the other. -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/quoted_text_show"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="10dp"
+            android:minHeight="0dp"
+            android:paddingStart="12dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="6dp"
+            android:text="@string/message_compose_show_quoted_text_action"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="13sp"
+            app:cornerRadius="8dp"
+            app:icon="@drawable/ic_expand_more"
+            app:iconGravity="textStart"
+            app:iconSize="16dp"
+            app:iconTint="?attr/colorOnSurfaceVariant"
+            app:strokeColor="?attr/colorOutlineVariant"
+            />
+
+        <!-- Quoted text bar -->
+        <RelativeLayout
+            android:id="@+id/quoted_text_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/civion_quote_rule"
+            android:paddingStart="16dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="16dp"
+            >
+
+            <EditText
+                android:id="@+id/quoted_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toStartOf="@+id/quoted_text_buttons"
+                android:background="@drawable/civion_quote_line"
+                android:gravity="top"
+                android:imeOptions="flagNoExtractUi|flagNoPersonalizedLearning"
+                android:inputType="textMultiLine|textAutoCorrect|textCapSentences"
+                android:minLines="3"
+                android:paddingStart="12dp"
+                android:paddingEnd="0dp"
+                android:textColor="@color/civion_text3"
+                android:textSize="14sp"
+                />
+
+            <com.fsck.k9.view.MessageWebView
+                android:id="@+id/quoted_html"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toStartOf="@+id/quoted_text_buttons"
+                />
+
+            <LinearLayout
+                android:id="@+id/quoted_text_buttons"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                >
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/quoted_text_edit"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:contentDescription="@string/message_compose_description_edit_quoted_text"
+                    app:icon="@drawable/ic_edit"
+                    app:iconTint="?attr/colorOnSurfaceVariant"
+                    />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/quoted_text_delete"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/message_compose_description_delete_quoted_text"
+                    app:icon="@drawable/ic_close"
+                    app:iconTint="?attr/colorOnSurfaceVariant"
+                    />
+
+            </LinearLayout>
+
+        </RelativeLayout>
+
+        <EditText
+            android:id="@+id/lower_signature"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:gravity="top"
+            android:hint="@string/message_compose_signature_hint"
+            android:imeOptions="flagNoExtractUi|flagNoPersonalizedLearning"
+            android:inputType="textMultiLine|textAutoCorrect|textCapSentences"
+            android:minLines="0"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:textColor="@color/civion_text3"
+            android:textSize="13.5sp"
+            />
+
+        <com.fsck.k9.view.MessageWebView
+            android:id="@+id/lower_signature_html_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            />
+
+        <!--
+            Empty container for storing attachments. We'll stick
+            instances of message_compose_attachment.xml in here.
+        -->
+        <LinearLayout
+            android:id="@+id/attachments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:orientation="vertical"
+            />
+
+    </LinearLayout>
+
+</ScrollView>
