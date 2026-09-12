@@ -43,6 +43,9 @@ class CivionDrawer(
     private val openFolder: (accountUuid: String, folderId: Long) -> Unit,
     private val openUnifiedFolder: () -> Unit,
     private val openManageFolders: () -> Unit,
+    // Still supplied by the host, no longer offered by the drawer: a manual sync is pull-to-refresh
+    // on the list, which is the same call. Kept so the host hook does not have to change.
+    @Suppress("UnusedPrivateProperty", "unused")
     private val syncAccount: (accountUuid: String) -> Unit,
     private val openSettings: () -> Unit,
     private val openAddAccount: () -> Unit,
@@ -75,7 +78,10 @@ class CivionDrawer(
         observeAccounts()
 
         drawerContent.setContent {
-            themeProvider.WithTheme {
+            // The drawer is graphite whatever the application theme is: it is a navigation surface
+            // beside the mail, not part of the page, and the accepted direction gives it the dark
+            // ground in both themes.
+            themeProvider.WithTheme(darkTheme = true) {
                 val drawerState = state.collectAsStateWithLifecycle()
 
                 CivionDrawerContent(
@@ -96,13 +102,12 @@ class CivionDrawer(
                         closeSelector()
                         openAddAccount()
                     },
+                    onFoldersToggle = {
+                        state.update { it.copy(isFoldersOpen = !it.isFoldersOpen) }
+                    },
                     onFolderClick = { accountUuid, folderId ->
                         close()
                         openFolder(accountUuid, folderId)
-                    },
-                    onSyncAccountClick = {
-                        close()
-                        state.value.selectedAccountUuid?.let(syncAccount)
                     },
                     onManageFoldersClick = {
                         close()
@@ -147,6 +152,9 @@ class CivionDrawer(
                                 unreadCount = displayFolders
                                     .firstOrNull { it.folder.type == FolderType.INBOX }
                                     ?.unreadMessageCount ?: 0,
+                                inboxFolderId = displayFolders
+                                    .firstOrNull { it.folder.type == FolderType.INBOX }
+                                    ?.folder?.id,
                                 folders = folderTree.build(displayFolders),
                             )
                         }
@@ -206,7 +214,11 @@ class CivionDrawer(
         state.update { it.copy(selectedFolderId = null) }
     }
 
-    override fun open() = drawer.openDrawer(GravityCompat.START)
+    /** Every opening starts at the same place: the account, its Inbox, and nothing unfolded. */
+    override fun open() {
+        state.update { it.copy(isAccountSelectorOpen = false, isFoldersOpen = false) }
+        drawer.openDrawer(GravityCompat.START)
+    }
 
     override fun close() = drawer.closeDrawer(GravityCompat.START)
 

@@ -28,6 +28,9 @@ dependencies {
     implementation(projects.feature.mail.folder.api)
     implementation(projects.feature.search.implLegacy)
     implementation(projects.legacy.ui.folder)
+
+    // Already in the artifact through Bolt; named here for the four SMART icons the Bolt set lacks.
+    implementation(libs.jetbrains.compose.material.icons.extended)
 }
 
 codeCoverage {

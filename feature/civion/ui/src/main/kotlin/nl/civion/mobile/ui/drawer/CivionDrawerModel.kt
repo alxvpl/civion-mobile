@@ -14,6 +14,8 @@ internal data class CivionDrawerState(
     val selectedFolderId: Long? = null,
     val isUnifiedSelected: Boolean = false,
     val isAccountSelectorOpen: Boolean = false,
+    /** The folder tree is shown only after the user asks for it; the drawer opens with Inbox alone. */
+    val isFoldersOpen: Boolean = false,
     val unifiedUnreadCount: Int = 0,
 ) {
     val selectedAccount: DrawerAccount?
@@ -31,8 +33,13 @@ internal data class DrawerAccount(
     val uuid: String,
     val email: String,
     val unreadCount: Int,
+    /** The account's Inbox, which the drawer offers on its own; `null` until the folder list has loaded. */
+    val inboxFolderId: Long?,
     val folders: List<DrawerFolderNode>,
-)
+) {
+    /** What the avatar shows: the first letter of the address, which is how the user tells accounts apart. */
+    val initial: String get() = email.trim().take(1).uppercase()
+}
 
 /**
  * A folder, and whatever is under it.
