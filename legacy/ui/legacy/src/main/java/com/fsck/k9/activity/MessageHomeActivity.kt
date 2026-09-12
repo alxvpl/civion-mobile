@@ -9,6 +9,7 @@ import android.os.Parcelable
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
+import androidx.appcompat.widget.SearchView
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.ProgressBar
@@ -1223,25 +1224,20 @@ open class MessageHomeActivity :
     }
 
     /**
-     * Sends the toolbar's search action to CIVION Mail's Search screen instead of expanding the
-     * search view in place. The item is upstream's, so it keeps its view and its place; only its
-     * expansion is answered here, and only while the drawer that owns the screen is CIVION's.
+     * Sends the toolbar's search action to CIVION Mail's Search screen instead of opening the
+     * search view in place. The item and its view are upstream's and keep their place; only the
+     * tap on the icon is answered here, and only while the drawer that owns the screen is CIVION's.
      */
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         val prepared = super.onPrepareOptionsMenu(menu)
 
         val civionDrawer = navigationDrawer as? CivionDrawer
-        if (civionDrawer != null) {
-            menu.findItem(R.id.search)?.setOnActionExpandListener(
-                object : MenuItem.OnActionExpandListener {
-                    override fun onMenuItemActionExpand(item: MenuItem): Boolean {
-                        civionDrawer.openSearch()
-                        return false
-                    }
-
-                    override fun onMenuItemActionCollapse(item: MenuItem): Boolean = true
-                },
-            )
+        val searchView = menu.findItem(R.id.search)?.actionView as? SearchView
+        if (civionDrawer != null && searchView != null) {
+            searchView.setOnSearchClickListener {
+                searchView.isIconified = true
+                civionDrawer.openSearch()
+            }
         }
 
         return prepared
