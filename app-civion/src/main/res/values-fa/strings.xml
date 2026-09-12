@@ -3,6 +3,9 @@
 <resources>
     <string name="about_app_authors_k9" translatable="false">CIVION Mail</string>
     <string name="about_app_authors_thunderbird" translatable="false">Built on Thunderbird for Android</string>
+    <string name="about_project_title" translatable="false">Built on Thunderbird for Android</string>
+    <string name="about_website_title" translatable="false">Thunderbird for Android</string>
+    <string name="user_forum_title" translatable="false">Thunderbird support</string>
     <string name="onboarding_welcome_text" translatable="false">Mail for Android, built on the Thunderbird engine.</string>
     <string name="onboarding_welcome_import_button" translatable="false">Import settings</string>
     <string name="onboarding_welcome_developed_by" translatable="false">CIVION Mail is built on Thunderbird for Android, an open source project of MZLA Technologies and the Mozilla community.</string>
