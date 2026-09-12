@@ -13,7 +13,6 @@ internal data class CivionDrawerState(
     val selectedAccountUuid: String? = null,
     val selectedFolderId: Long? = null,
     val isUnifiedSelected: Boolean = false,
-    val isAccountSelectorOpen: Boolean = false,
     /** The folder tree is shown only after the user asks for it; the drawer opens with Inbox alone. */
     val isFoldersOpen: Boolean = false,
     val unifiedUnreadCount: Int = 0,

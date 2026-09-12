@@ -22,6 +22,8 @@ import net.thunderbird.core.ui.theme.api.FeatureThemeProvider
 import net.thunderbird.feature.mail.folder.api.FolderType
 import net.thunderbird.feature.navigation.drawer.api.NavigationDrawer
 import net.thunderbird.feature.navigation.drawer.api.R
+import nl.civion.mobile.ui.accounts.CivionAccountsScreen
+import nl.civion.mobile.ui.screen.CivionScreenOverlay
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -63,6 +65,7 @@ class CivionDrawer(
     private val drawerContent: ComposeView = parent.findViewById(R.id.navigation_drawer_content)
 
     private val state = MutableStateFlow(CivionDrawerState())
+    private val screens = CivionScreenOverlay(parent)
 
     init {
         drawer.addDrawerListener(createDrawerListener())
@@ -80,20 +83,16 @@ class CivionDrawer(
 
                 CivionDrawerContent(
                     state = drawerState.value,
-                    onAccountSelectorToggle = {
-                        state.update { it.copy(isAccountSelectorOpen = !it.isAccountSelectorOpen) }
+                    onAccountsClick = {
+                        close()
+                        showAccounts()
                     },
                     onAllInboxesClick = {
-                        closeSelector()
+                        close()
                         openUnifiedFolder()
                     },
-                    onAccountClick = {
-                        closeSelector()
-                        openAccount(it)
-                    },
-                    onAccountMove = ::moveAccount,
                     onAddAccountClick = {
-                        closeSelector()
+                        close()
                         openAddAccount()
                     },
                     onFoldersToggle = {
@@ -176,10 +175,31 @@ class CivionDrawer(
         accountManager.moveAccount(account, toPosition)
     }
 
-    /** Choosing an account puts the folder list back, which is what the user went there for. */
-    private fun closeSelector() {
-        state.update { it.copy(isAccountSelectorOpen = false) }
-        close()
+    /** The account list (mockup screen 03), over this activity; choosing closes it. */
+    private fun showAccounts() {
+        screens.show {
+            themeProvider.WithTheme {
+                val drawerState = state.collectAsStateWithLifecycle()
+
+                CivionAccountsScreen(
+                    state = drawerState.value,
+                    onBack = screens::hide,
+                    onAllInboxesClick = {
+                        screens.hide()
+                        openUnifiedFolder()
+                    },
+                    onAccountClick = {
+                        screens.hide()
+                        openAccount(it)
+                    },
+                    onAccountMove = ::moveAccount,
+                    onAddAccountClick = {
+                        screens.hide()
+                        openAddAccount()
+                    },
+                )
+            }
+        }
     }
 
     override val isOpen: Boolean
@@ -187,7 +207,7 @@ class CivionDrawer(
 
     override fun selectAccount(accountUuid: String) {
         state.update {
-            it.copy(selectedAccountUuid = accountUuid, isUnifiedSelected = false, isAccountSelectorOpen = false)
+            it.copy(selectedAccountUuid = accountUuid, isUnifiedSelected = false)
         }
     }
 
@@ -197,14 +217,13 @@ class CivionDrawer(
                 selectedAccountUuid = accountUuid,
                 selectedFolderId = folderId,
                 isUnifiedSelected = false,
-                isAccountSelectorOpen = false,
             )
         }
     }
 
     override fun selectUnifiedInbox() {
         state.update {
-            it.copy(isUnifiedSelected = true, selectedFolderId = null, isAccountSelectorOpen = false)
+            it.copy(isUnifiedSelected = true, selectedFolderId = null)
         }
     }
 
@@ -214,7 +233,7 @@ class CivionDrawer(
 
     /** Every opening starts at the same place: the account, its Inbox, and nothing unfolded. */
     override fun open() {
-        state.update { it.copy(isAccountSelectorOpen = false, isFoldersOpen = false) }
+        state.update { it.copy(isFoldersOpen = false) }
         drawer.openDrawer(GravityCompat.START)
     }
 

@@ -99,10 +99,8 @@ private const val FOOT_BOTTOM_DP = 8
 @Composable
 internal fun CivionDrawerContent(
     state: CivionDrawerState,
-    onAccountSelectorToggle: () -> Unit,
+    onAccountsClick: () -> Unit,
     onAllInboxesClick: () -> Unit,
-    onAccountClick: (accountUuid: String) -> Unit,
-    onAccountMove: (accountUuid: String, toPosition: Int) -> Unit,
     onAddAccountClick: () -> Unit,
     onFoldersToggle: () -> Unit,
     onFolderClick: (accountUuid: String, folderId: Long) -> Unit,
@@ -123,8 +121,7 @@ internal fun CivionDrawerContent(
             modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
             ActionPanel(
-                isSelectorOpen = state.isAccountSelectorOpen,
-                onAccountsClick = onAccountSelectorToggle,
+                onAccountsClick = onAccountsClick,
                 onAddAccountClick = onAddAccountClick,
                 onSettingsClick = onSettingsClick,
             )
@@ -139,27 +136,18 @@ internal fun CivionDrawerContent(
                     .weight(1f)
                     .verticalScroll(rememberScrollState()),
             ) {
-                if (state.isAccountSelectorOpen) {
-                    AccountSelector(
-                        state = state,
-                        onAllInboxesClick = onAllInboxesClick,
-                        onAccountClick = onAccountClick,
-                        onAccountMove = onAccountMove,
-                    )
-                } else {
-                    MailSection(
-                        state = state,
-                        onAllInboxesClick = onAllInboxesClick,
-                        onFoldersToggle = onFoldersToggle,
-                        onFolderClick = onFolderClick,
-                        onManageFoldersClick = onManageFoldersClick,
-                    )
+                MailSection(
+                    state = state,
+                    onAllInboxesClick = onAllInboxesClick,
+                    onFoldersToggle = onFoldersToggle,
+                    onFolderClick = onFolderClick,
+                    onManageFoldersClick = onManageFoldersClick,
+                )
 
-                    SmartSection()
-                }
+                SmartSection()
             }
 
-            if (state.selectedAccount != null && !state.isUnifiedSelected && !state.isAccountSelectorOpen) {
+            if (state.selectedAccount != null && !state.isUnifiedSelected) {
                 SecondaryActions(onSyncAccountClick = onSyncAccountClick)
             }
         }
@@ -171,11 +159,10 @@ internal fun CivionDrawerContent(
  *
  * Each is an icon alone, its name being its content description, on a 44dp round target with
  * nothing drawn behind it: the panel is the drawer's own surface, not a band. Accounts opens the
- * list of accounts and is marked while that list is showing.
+ * list of accounts as a screen of its own.
  */
 @Composable
 private fun ActionPanel(
-    isSelectorOpen: Boolean,
     onAccountsClick: () -> Unit,
     onAddAccountClick: () -> Unit,
     onSettingsClick: () -> Unit,
@@ -191,24 +178,9 @@ private fun ActionPanel(
                 bottom = PANEL_BOTTOM_DP.dp,
             ),
     ) {
-        PanelAction(
-            icon = Icons.Outlined.Group,
-            label = "Accounts",
-            active = isSelectorOpen,
-            onClick = onAccountsClick,
-        )
-        PanelAction(
-            icon = Icons.Outlined.Add,
-            label = "Add account",
-            active = false,
-            onClick = onAddAccountClick,
-        )
-        PanelAction(
-            icon = Icons.Outlined.Settings,
-            label = "Settings",
-            active = false,
-            onClick = onSettingsClick,
-        )
+        PanelAction(icon = Icons.Outlined.Group, label = "Accounts", onClick = onAccountsClick)
+        PanelAction(icon = Icons.Outlined.Add, label = "Add account", onClick = onAddAccountClick)
+        PanelAction(icon = Icons.Outlined.Settings, label = "Settings", onClick = onSettingsClick)
     }
 }
 
@@ -216,11 +188,8 @@ private fun ActionPanel(
 private fun PanelAction(
     icon: ImageVector,
     label: String,
-    active: Boolean,
     onClick: () -> Unit,
 ) {
-    val colour = if (active) BoltTheme.colors.primary else BoltTheme.colors.onSurfaceVariant
-
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -231,7 +200,7 @@ private fun PanelAction(
     ) {
         Icon(
             imageVector = icon,
-            tint = colour,
+            tint = BoltTheme.colors.onSurfaceVariant,
             modifier = Modifier.size(PANEL_ICON_DP.dp),
         )
     }
@@ -318,51 +287,6 @@ private fun SectionLabel(text: String) {
             bottom = SECTION_BOTTOM_DP.dp,
         ),
     )
-}
-
-/**
- * Every account, one row each, in the order the user put them in - the address and nothing else.
- * All Inboxes sits above them when there is more than one. Adding an account is on the panel above.
- */
-@Composable
-private fun AccountSelector(
-    state: CivionDrawerState,
-    onAllInboxesClick: () -> Unit,
-    onAccountClick: (accountUuid: String) -> Unit,
-    onAccountMove: (accountUuid: String, toPosition: Int) -> Unit,
-) {
-    val haptics = LocalHapticFeedback.current
-    val dragState = remember { AccountDragState(state.accounts.map { it.uuid }) }
-    dragState.adoptIfIdle(state.accounts.map { it.uuid })
-
-    Column {
-        SectionLabel(text = "ACCOUNTS")
-
-        if (state.accounts.size > 1) {
-            DrawerRow(
-                label = "All Inboxes",
-                icon = Icons.Outlined.AllInbox,
-                selected = state.isUnifiedSelected,
-                count = state.unifiedUnreadCount,
-                onClick = onAllInboxesClick,
-            )
-        }
-
-        dragState.orderedIds
-            .mapNotNull { uuid -> state.accounts.firstOrNull { it.uuid == uuid } }
-            .forEach { account ->
-                DrawerRow(
-                    label = account.email,
-                    icon = null,
-                    selected = account.uuid == state.selectedAccountUuid && !state.isUnifiedSelected,
-                    count = account.unreadCount,
-                    onClick = { onAccountClick(account.uuid) },
-                    modifier = Modifier
-                        .onSizeChanged { dragState.rowHeight = it.height.toFloat() }
-                        .draggableAccount(account.uuid, dragState, haptics, onAccountMove),
-                )
-            }
-    }
 }
 
 /**
