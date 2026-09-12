@@ -37,8 +37,19 @@ class CivionReadableCssStyleProviderTest {
     }
 
     @Test
-    fun `should restore the default body text size`() {
-        assertThat(style).contains("font-size: 1rem")
+    fun `should set the body to 15sp on the line the mockup has`() {
+        assertThat(style).contains("font-size: 0.9375rem")
+        assertThat(style).contains("line-height: 1.62")
+    }
+
+    @Test
+    fun `should paint the dark body on the window and leave the light one alone`() {
+        val darkStyle = CivionReadableCssStyleProvider.Factory(FakeCssClassNameProvider)
+            .create(HtmlSettings(useDarkMode = true, useFixedWidthFont = false))
+            .style
+
+        assertThat(darkStyle).contains("background-color: #212121 !important")
+        assertThat(style).doesNotContain("background-color")
     }
 
     @Test

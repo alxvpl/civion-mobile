@@ -22,6 +22,7 @@ import net.thunderbird.feature.mail.message.reader.api.css.GlobalCssStyleProvide
  */
 internal class CivionReadableCssStyleProvider private constructor(
     cssClassNameProvider: CssClassNameProvider,
+    private val useDarkMode: Boolean,
 ) : GlobalCssStyleProvider {
 
     private val content =
@@ -66,7 +67,18 @@ internal class CivionReadableCssStyleProvider private constructor(
         |    font-size: 0.9375rem;
         |    line-height: 1.62;
         |  }
+        |
+        |  /* In the dark theme upstream paints every element #121212; the mockup of 2026-09-12
+        |     (screen 04) has the body on the window, #212121, like the header above it. This
+        |     sheet comes after upstream's, so the same rule with the window's value wins. */
+        |${if (useDarkMode) darkWindowRule() else ""}
         |</style>
+    """.trimMargin()
+
+    private fun darkWindowRule(): String = """
+        |  html, body, $content, $content * {
+        |    background-color: #212121 !important;
+        |  }
     """.trimMargin()
 
     internal class Factory(
@@ -74,6 +86,7 @@ internal class CivionReadableCssStyleProvider private constructor(
     ) : GlobalCssStyleProvider.Factory {
         override fun create(htmlSettings: HtmlSettings): CssStyleProvider = CivionReadableCssStyleProvider(
             cssClassNameProvider = cssClassNameProvider,
+            useDarkMode = htmlSettings.useDarkMode,
         )
     }
 }
