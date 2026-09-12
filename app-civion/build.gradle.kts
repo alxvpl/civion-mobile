@@ -378,6 +378,7 @@ dependencies {
     "integratedImplementation"(projects.feature.civion.integration.impl)
     implementation(projects.feature.civion.navigation)
     implementation(projects.feature.civion.ui)
+    implementation(projects.feature.search.implLegacy)
 
     implementation(projects.feature.autodiscovery.api)
     implementation(projects.feature.account.settings.api)

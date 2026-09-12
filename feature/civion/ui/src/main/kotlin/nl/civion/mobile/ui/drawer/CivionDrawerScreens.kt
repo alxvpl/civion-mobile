@@ -7,6 +7,9 @@ import net.thunderbird.core.ui.theme.api.FeatureThemeProvider
 import nl.civion.mobile.ui.accounts.CivionAccountsScreen
 import nl.civion.mobile.ui.folders.CivionFoldersScreen
 import nl.civion.mobile.ui.screen.CivionScreenOverlay
+import nl.civion.mobile.ui.search.CivionSearchNavigator
+import nl.civion.mobile.ui.search.CivionSearchQuery
+import nl.civion.mobile.ui.search.CivionSearchScreen
 import nl.civion.mobile.ui.settings.CivionSettingsActions
 import nl.civion.mobile.ui.settings.CivionSettingsModel
 import nl.civion.mobile.ui.settings.CivionSettingsNavigator
@@ -23,6 +26,7 @@ internal class CivionDrawerScreens(
     private val themeProvider: FeatureThemeProvider,
     private val drawerState: StateFlow<CivionDrawerState>,
     private val settingsNavigator: CivionSettingsNavigator,
+    private val searchNavigator: CivionSearchNavigator,
     settingsModel: (onThemeChange: () -> Unit) -> CivionSettingsModel,
     private val openAccount: (accountUuid: String) -> Unit,
     private val openUnifiedFolder: () -> Unit,
@@ -86,6 +90,25 @@ internal class CivionDrawerScreens(
                         account?.let { openFolder(it.uuid, folderId) }
                     },
                     onManageFoldersClick = openManageFolders,
+                )
+            }
+        }
+    }
+
+    /** Search (mockup 07); searching hands the result to upstream's list and closes it. */
+    fun showSearch() {
+        overlay.show {
+            themeProvider.WithTheme {
+                CivionSearchScreen(
+                    initial = CivionSearchQuery(),
+                    onBack = overlay::hide,
+                    onSearch = { query ->
+                        val state = drawerState.value
+                        val accountUuid = state.selectedAccountUuid.takeUnless { state.isUnifiedSelected }
+
+                        overlay.hide()
+                        searchNavigator.showResults(parent, query.toLocalSearch(accountUuid, state.selectedFolderId))
+                    },
                 )
             }
         }

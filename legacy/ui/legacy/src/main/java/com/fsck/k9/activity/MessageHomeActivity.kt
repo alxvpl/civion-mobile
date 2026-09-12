@@ -7,6 +7,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.KeyEvent
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.animation.AnimationUtils
@@ -1219,6 +1220,31 @@ open class MessageHomeActivity :
         if (isDrawerEnabled) {
             lockDrawer()
         }
+    }
+
+    /**
+     * Sends the toolbar's search action to CIVION Mail's Search screen instead of expanding the
+     * search view in place. The item is upstream's, so it keeps its view and its place; only its
+     * expansion is answered here, and only while the drawer that owns the screen is CIVION's.
+     */
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        val prepared = super.onPrepareOptionsMenu(menu)
+
+        val civionDrawer = navigationDrawer as? CivionDrawer
+        if (civionDrawer != null) {
+            menu.findItem(R.id.search)?.setOnActionExpandListener(
+                object : MenuItem.OnActionExpandListener {
+                    override fun onMenuItemActionExpand(item: MenuItem): Boolean {
+                        civionDrawer.openSearch()
+                        return false
+                    }
+
+                    override fun onMenuItemActionCollapse(item: MenuItem): Boolean = true
+                },
+            )
+        }
+
+        return prepared
     }
 
     override fun onSearchRequested(): Boolean {

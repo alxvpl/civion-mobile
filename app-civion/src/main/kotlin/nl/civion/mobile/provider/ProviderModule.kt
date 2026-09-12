@@ -6,6 +6,7 @@ import net.thunderbird.core.common.provider.AppNameProvider
 import net.thunderbird.core.common.provider.BrandNameProvider
 import net.thunderbird.core.ui.theme.api.FeatureThemeProvider
 import net.thunderbird.core.ui.theme.api.ThemeProvider
+import nl.civion.mobile.ui.search.CivionSearchNavigator
 import nl.civion.mobile.ui.settings.CivionSettingsNavigator
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.binds
@@ -21,6 +22,8 @@ internal val providerModule = module {
     single<FeatureThemeProvider> { CivionFeatureThemeProvider() }
 
     single<CivionSettingsNavigator> { CivionSettingsNavigatorImpl() }
+
+    single<CivionSearchNavigator> { CivionSearchNavigatorImpl() }
 
     single<NotificationIconResourceProvider> {
         CivionAppNotificationIconProvider()

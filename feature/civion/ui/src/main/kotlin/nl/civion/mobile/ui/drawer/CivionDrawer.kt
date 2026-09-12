@@ -24,6 +24,7 @@ import net.thunderbird.core.ui.theme.api.FeatureThemeProvider
 import net.thunderbird.feature.mail.folder.api.FolderType
 import net.thunderbird.feature.navigation.drawer.api.NavigationDrawer
 import net.thunderbird.feature.navigation.drawer.api.R
+import nl.civion.mobile.ui.search.CivionSearchNavigator
 import nl.civion.mobile.ui.settings.CivionSettingsModel
 import nl.civion.mobile.ui.settings.CivionSettingsNavigator
 import org.koin.core.component.KoinComponent
@@ -57,6 +58,7 @@ class CivionDrawer(
     private val generalSettingsManager: GeneralSettingsManager by inject()
     private val messageListPreferencesManager: MessageListPreferencesManager by inject()
     private val settingsNavigator: CivionSettingsNavigator by inject()
+    private val searchNavigator: CivionSearchNavigator by inject()
     private val displayFolderRepository: DisplayFolderRepository by inject()
     private val folderNameFormatter: FolderNameFormatter by inject()
 
@@ -74,6 +76,7 @@ class CivionDrawer(
         themeProvider = themeProvider,
         drawerState = state,
         settingsNavigator = settingsNavigator,
+        searchNavigator = searchNavigator,
         settingsModel = { onThemeChange ->
             CivionSettingsModel(
                 accountManager = accountManager,
@@ -197,6 +200,12 @@ class CivionDrawer(
         val account = accountManager.getAccount(accountUuid) ?: return
 
         accountManager.moveAccount(account, toPosition)
+    }
+
+    /** The Search screen (mockup 07), for the host to open from its search action. */
+    fun openSearch() {
+        close()
+        screens.showSearch()
     }
 
     override val isOpen: Boolean
