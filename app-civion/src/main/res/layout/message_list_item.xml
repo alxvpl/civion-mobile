@@ -8,24 +8,26 @@
 
   The row is three columns:
 
-    contact picture | subject, then sender - preview | date over star (and paperclip)
+    contact picture | subject / sender / preview | star over date (and paperclip)
 
     - The contact picture (and the check mark that replaces it in selection) is centred on the
       row by a constraint bias between the row's own guidelines, not by a top margin, so it
       sits the same way beside a two-line row and a four-line one.
 
-    - The text block is bounded: the subject is one line, cut with an ellipsis, and the
-      preview takes the lines the Preview lines setting allows and no more. Its width runs from
-      the picture to the trailing column, on every line, so no text sits under the metadata.
+    - The text block is three lines: the subject, the sender, the preview - each one line, each
+      cut with an ellipsis. The engine hands the row "sender - preview" as one string; the
+      preview view (SenderLinePreviewTextView, app-civion) puts the sender on its own line. The
+      block runs from the picture to the trailing column on every line, so no text sits under
+      the metadata.
 
-    - The trailing column holds the date above the star, with the paperclip beside the star
-      when there is one. A barrier on the column's start is what the text ends at, so the
-      column's width - the date's, never less than 52dp, which is what star and paperclip
-      need - is the only thing that decides where the text stops; a long subject cannot push
-      the date, and a paperclip cannot move the star. The star's tap area is 48dp around it.
+    - The trailing column: the paperclip, as a small chip in the row's corner when there is one,
+      then the star, then the date. A barrier on the column's start is what the
+      text ends at, so the column's width - the date's, never less than 52dp - is the only
+      thing that decides where the text stops; a long subject cannot push the date, and a
+      paperclip cannot move the star. The star's tap area is 48dp around it.
 
-    - `account_color_chip` and `status` are aligned to `date`, which is always one line, so
-      the chip and the reply/forward marker stay on the subject line.
+    - `account_color_chip` and `status` are aligned to `subject`, so the chip and the
+      reply/forward marker stay on the subject line.
 
     - The row's horizontal padding, the picture keyline and the vertical padding come from
       app-civion's values/dimensions.xml.
@@ -79,13 +81,14 @@
         tools:src="@drawable/ic_person"
         />
 
-    <com.google.android.material.textview.MaterialTextView
+    <nl.civion.mobile.list.SenderLinePreviewTextView
         android:id="@+id/preview"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/messageListDefaultTextViewMargin"
         android:layout_marginEnd="8dp"
         android:bufferType="spannable"
+        android:ellipsize="end"
         android:lineSpacingMultiplier="@dimen/messageListDefaultLineSpacingMultiplier"
         android:singleLine="false"
         android:textAppearance="?attr/textAppearanceBodyMedium"
@@ -105,9 +108,9 @@
         android:paddingStart="0dp"
         android:paddingEnd="4dp"
         android:contentDescription="@null"
-        app:layout_constraintBottom_toBottomOf="@+id/date"
+        app:layout_constraintBottom_toBottomOf="@+id/subject"
         app:layout_constraintStart_toEndOf="@+id/barrier_start"
-        app:layout_constraintTop_toTopOf="@+id/date"
+        app:layout_constraintTop_toTopOf="@+id/subject"
         app:srcCompat="@drawable/ic_account_color"
         tools:tint="@color/material_blue_700"
         />
@@ -118,8 +121,8 @@
         android:layout_height="20dp"
         android:paddingEnd="2dp"
         app:layout_constraintStart_toEndOf="@+id/account_color_chip"
-        app:layout_constraintTop_toTopOf="@+id/date"
-        app:layout_constraintBottom_toBottomOf="@+id/date"
+        app:layout_constraintTop_toTopOf="@+id/subject"
+        app:layout_constraintBottom_toBottomOf="@+id/subject"
         app:srcCompat="@drawable/ic_reply"
         tools:ignore="RtlSymmetry"
         />
@@ -159,12 +162,15 @@
 
     <ImageView
         android:id="@+id/attachment"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="4dp"
-        app:layout_constraintBottom_toBottomOf="@+id/star"
-        app:layout_constraintEnd_toStartOf="@+id/star"
-        app:layout_constraintTop_toTopOf="@+id/star"
+        android:layout_width="24dp"
+        android:layout_height="14dp"
+        android:layout_marginTop="2dp"
+        android:layout_marginEnd="@dimen/messageListHorizontalPadding"
+        android:background="@drawable/message_list_attachment_chip"
+        android:padding="2dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_attachment"
         />
 
@@ -178,8 +184,9 @@
         android:singleLine="true"
         android:textAppearance="?attr/textAppearanceBodyMedium"
         android:textColor="?attr/colorOnSurfaceVariant"
-        app:layout_constraintBaseline_toBaselineOf="@+id/subject"
+        android:layout_marginTop="2dp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/star"
         tools:text="Oct 27"
         />
 
@@ -188,11 +195,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/messageListHorizontalPadding"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:src="@drawable/btn_select_star"
         android:contentDescription="@string/star_button_description"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/date"
+        app:layout_constraintTop_toBottomOf="@+id/attachment"
+        app:layout_goneMarginTop="@dimen/messageListDefaultVerticalPadding"
         />
 
     <androidx.constraintlayout.widget.Guideline
