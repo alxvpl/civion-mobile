@@ -4,19 +4,36 @@
         The product name the user sees, everywhere the user sees one.
 
         It overrides the same name in the library modules, which is how this build stops
-        presenting itself as the upstream product it is composed from. CIVION belongs to the
-        optional integration, not to the mail client, so it does not appear here.
+        presenting itself as the upstream product it is composed from. CIVION Mail is the name
+        accepted in the CIVION Mail UI decisions of 2026-09-10; "Android Mail", which preceded it,
+        was a working name and is not the product.
     -->
-    <string name="app_name" translatable="false">Android Mail</string>
-    <string name="brand_name" translatable="false">Android Mail</string>
+    <string name="app_name" translatable="false">CIVION Mail</string>
+    <string name="brand_name" translatable="false">CIVION Mail</string>
 
     <!--
         About, which is the one screen where the upstream product was still named to the user.
 
         Thunderbird is the mail engine and saying so is both accurate and the right thing to do;
-        what it is not is the name of this product. So the authors line is Android Mail's, and
+        what it is not is the name of this product. So the authors line is CIVION Mail's, and
         the line under it credits what it is built on.
+
+        Upstream translates these two strings into every locale it ships, and a translated
+        resource beats an untranslated default for a user in that locale - which is how a phone
+        set to English (UK) kept showing "The K-9 Dog Walkers". So the same two values are
+        repeated in a values-<locale> file for every locale upstream defines them in; those
+        files are generated, and say so.
     -->
-    <string name="about_app_authors_k9" translatable="false">Android Mail</string>
+    <string name="about_app_authors_k9" translatable="false">CIVION Mail</string>
     <string name="about_app_authors_thunderbird" translatable="false">Built on Thunderbird for Android</string>
+
+    <!--
+        The welcome screen, which described the upstream product and its makers. The description
+        is now what this product is; the makers of the engine are still credited, because they
+        made it. The import button imports a settings file, which is what it does - it was named
+        for K-9 only because that is where the format came from.
+    -->
+    <string name="onboarding_welcome_text" translatable="false">Mail for Android, built on the Thunderbird engine.</string>
+    <string name="onboarding_welcome_import_button" translatable="false">Import settings</string>
+    <string name="onboarding_welcome_developed_by" translatable="false">CIVION Mail is built on Thunderbird for Android, an open source project of MZLA Technologies and the Mozilla community.</string>
 </resources>

@@ -11,7 +11,7 @@ import org.junit.runner.RunWith
 import org.koin.core.context.GlobalContext
 
 /**
- * Journey `product-identity`: the running application presents itself as CIVION Mobile.
+ * Journey `product-identity`: the running application presents itself as CIVION Mail.
  *
  * This product is a third persona inside a codebase that also builds K-9 Mail and Thunderbird
  * for Android, and it is composed rather than forked: which name the user sees is decided by a
@@ -32,7 +32,7 @@ class ProductIdentityTest {
 
     @Test
     fun theApplicationCallsItselfAndroidMail() {
-        assertEquals("Android Mail", appNameProvider.appName)
+        assertEquals("CIVION Mail", appNameProvider.appName)
     }
 
     /**
@@ -47,7 +47,7 @@ class ProductIdentityTest {
 
         val label = packageManager.getApplicationLabel(info).toString()
 
-        assertEquals("Android Mail", label)
+        assertEquals("CIVION Mail", label)
     }
 
     /**
@@ -65,11 +65,11 @@ class ProductIdentityTest {
                 .toString(),
         )
 
-        val otherProductNames = listOf("K-9 Mail", "Thunderbird", "CIVION")
+        val otherProductNames = listOf("K-9 Mail", "Thunderbird")
 
         otherProductNames.forEach { upstream ->
             assertTrue(
-                "The application presents itself as '$upstream'. It is Android Mail.",
+                "The application presents itself as '$upstream'. It is CIVION Mail.",
                 names.none { it.contains(upstream, ignoreCase = true) },
             )
         }

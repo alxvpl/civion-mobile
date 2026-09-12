@@ -140,9 +140,11 @@ android {
 
         versionCode = civionBuildNumber
         versionName = "0.1.0"
-        versionNameSuffix = "-alpha"
+        // The build number is part of the version the user can read in About - it is what a
+        // device review or a bug report needs to name, and versionCode is not shown anywhere.
+        versionNameSuffix = "-alpha ($civionBuildNumber)"
 
-        buildConfigField("String", "CLIENT_INFO_APP_NAME", "\"CIVION Mobile\"")
+        buildConfigField("String", "CLIENT_INFO_APP_NAME", "\"CIVION Mail\"")
         buildConfigField("int", "CIVION_BUILD_NUMBER", "$civionBuildNumber")
     }
 

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated: repeats CIVION Mail's untranslated product strings in a locale upstream translates them for, so the translation cannot shadow them. See values/strings.xml. -->
+<resources>
+    <string name="about_app_authors_k9" translatable="false">CIVION Mail</string>
+    <string name="about_app_authors_thunderbird" translatable="false">Built on Thunderbird for Android</string>
+</resources>

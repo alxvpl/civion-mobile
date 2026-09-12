@@ -429,7 +429,7 @@ try {
     # The product's name, so the file someone is about to install is not named after something
     # else. Only the prefix changed; the identity after it - version, build number, edition,
     # variant, short sha - is the same one, derived the same way.
-    $targetName = "Android-Mail-{0}.apk" -f $suffix
+    $targetName = "CIVION-Mail-{0}.apk" -f $suffix
     $targetApk  = Join-Path $OutDir $targetName
     Copy-Item -Force $source.FullName $targetApk
 

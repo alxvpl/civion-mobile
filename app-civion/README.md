@@ -1,13 +1,12 @@
-# Android Mail (`app-civion`)
+# CIVION Mail (`app-civion`)
 
 Third application module of this tree, alongside `app-k9mail` and `app-thunderbird`.
 
-The product is **Android Mail**: that is the name in the launcher, in notifications and in
-settings. CIVION is the optional integration it can be built with, not the mail client - which is
-why the module, the package and the application id are still `civion`, and the user never sees any
-of them.
+The product is **CIVION Mail**: that is the name in the launcher, in notifications and in
+settings. CIVION integration (Desktop/Core) is optional and compiled in only in the integrated
+edition; the standalone edition is a complete mail client under the same name.
 
-- component: **Android Mail** `0.1.0-alpha` (a build artifact identifier, not a product release)
+- component: **CIVION Mail** `0.1.0-alpha` (a build artifact identifier, not a product release)
 - application id: `nl.civion.mobile` (`nl.civion.mobile.debug` for debug builds)
 - composition: `app-civion` → `app-common` → existing Thunderbird/K-9 mail runtime
 - OAuth: CIVION's own Google client, or none. `CivionOAuthConfigurationFactory` builds the Gmail
@@ -92,7 +91,7 @@ Pass `-Edition integrated` for the other edition; `-Variant release` for a relea
 It is the one build procedure; the self-hosted CI runner calls the same script, so a CI artifact
 and a hand-built one are produced the same way. Output goes to `-OutDir`, else `CIVION_OUT_DIR`,
 else a repository-relative `out\`: the APK as
-`Android-Mail-<version>.<build>-<edition>[-<variant>]-<short sha>.apk`, beside its
+`CIVION-Mail-<version>.<build>-<edition>[-<variant>]-<short sha>.apk`, beside its
 `BUILD-INFO-*.txt` (edition, build number, commit, tree state, footprint, publication state,
 SHA-256), the Gradle log, `guard-*.txt` and a row in `build-history.csv`.
 

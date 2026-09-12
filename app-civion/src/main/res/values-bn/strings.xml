@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated: repeats CIVION Mail's untranslated product strings in a locale upstream translates them for, so the translation cannot shadow them. See values/strings.xml. -->
+<resources>
+    <string name="onboarding_welcome_text" translatable="false">Mail for Android, built on the Thunderbird engine.</string>
+    <string name="onboarding_welcome_import_button" translatable="false">Import settings</string>
+    <string name="onboarding_welcome_developed_by" translatable="false">CIVION Mail is built on Thunderbird for Android, an open source project of MZLA Technologies and the Mozilla community.</string>
+</resources>
