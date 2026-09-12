@@ -27,6 +27,9 @@
     <string name="about_app_authors_k9" translatable="false">CIVION Mail</string>
     <string name="about_app_authors_thunderbird" translatable="false">Built on Thunderbird for Android</string>
 
+    <!-- The attachments action on the message header (mockup screen 04); upstream has no such button. -->
+    <string name="civion_message_view_attachments" translatable="false">Attachments</string>
+
     <!--
         The second About section links to the engine's site and support forum. It used to be headed
         "Open Source Project" over "Website" and "User forum", which read as this product's; it is

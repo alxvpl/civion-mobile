@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CIVION Mail override of the message header (civion-mail-mockup screen 04).
+
+  A resource of this name in the application module wins over the one in legacy/ui/legacy. Every
+  id the MessageHeader class looks up is still here, in the same roles; what changes is the
+  arrangement and the measure: the subject at 20sp on two lines at most, the sender on a 40dp
+  picture with the address line under the name and the time set small at the end, the star at
+  20dp beside it, and under the header a bar of the message's actions between two hairlines -
+  reply in the accent, reply all, forward, attachments, more. Reply is the header's own primary
+  action and more its own overflow; the three between are CIVION's, found by tag from the
+  fragment, because ids generated here are not visible from legacy/ui/legacy.
+-->
+<com.fsck.k9.view.MessageHeader
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/header_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    >
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="16dp"
+        >
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/account_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:paddingVertical="2sp"
+            android:textColor="@android:color/white"
+            app:chipMinHeight="0dp"
+            app:ensureMinTouchTargetSize="false"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:textEndPadding="6sp"
+            app:textStartPadding="8sp"
+            tools:chipBackgroundColor="#6E56CF"
+            tools:text="Account name"
+            />
+
+        <com.fsck.k9.ui.helper.BottomBaselineTextView
+            android:id="@+id/subject"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="12dp"
+            android:ellipsize="end"
+            android:lineSpacingExtra="0sp"
+            android:maxLines="2"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="20sp"
+            android:textStyle="normal"
+            android:fontFamily="sans-serif-medium"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/account_name"
+            app:layout_constraintVertical_bias="0.0"
+            app:layout_goneMarginTop="0dp"
+            tools:text="Uw energierekening van maart 2026"
+            />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/participants_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="10dp"
+        >
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/contact_picture"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:src="@drawable/ic_account_circle"
+            />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/from"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="15sp"
+            app:layout_constraintEnd_toStartOf="@+id/date"
+            app:layout_constraintStart_toEndOf="@id/contact_picture"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Eneco"
+            />
+
+        <ImageView
+            android:id="@+id/crypto_status_icon"
+            android:layout_width="16sp"
+            android:layout_height="16sp"
+            android:layout_marginStart="12dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/recipients"
+            app:layout_constraintStart_toEndOf="@id/contact_picture"
+            app:layout_constraintTop_toTopOf="@+id/recipients"
+            app:srcCompat="@drawable/ic_no_encryption"
+            app:tint="?attr/openpgp_grey"
+            tools:visibility="visible"
+            />
+
+        <com.fsck.k9.ui.messageview.RecipientNamesView
+            android:id="@+id/recipients"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="8dp"
+            app:layout_constraintEnd_toStartOf="@+id/date"
+            app:layout_constraintStart_toEndOf="@id/crypto_status_icon"
+            app:layout_constraintTop_toBottomOf="@+id/from"
+            app:layout_goneMarginStart="12dp"
+            />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="none"
+            android:singleLine="true"
+            android:textColor="@color/civion_text3"
+            android:textSize="12sp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/from"
+            app:layout_constraintEnd_toStartOf="@+id/flagged"
+            tools:text="08:02"
+            />
+
+        <ImageView
+            android:id="@+id/flagged"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="2dp"
+            android:background="?attr/controlBackground"
+            android:padding="10dp"
+            android:src="@drawable/btn_select_star"
+            app:layout_constraintBottom_toBottomOf="@id/contact_picture"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/contact_picture"
+            />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- The action bar: between two hairlines, 48dp targets on 4dp of padding. -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/colorOutlineVariant"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="4dp"
+        android:paddingVertical="4dp"
+        >
+
+        <ImageView
+            android:id="@+id/menu_primary_action"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/controlBackground"
+            android:contentDescription="@string/reply_action"
+            android:padding="12dp"
+            app:tint="?attr/colorPrimary"
+            tools:srcCompat="@drawable/ic_reply"
+            />
+
+        <ImageView
+            android:tag="civion_action_reply_all"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/controlBackground"
+            android:clickable="true"
+            android:contentDescription="@string/reply_all_action"
+            android:focusable="true"
+            android:padding="12dp"
+            app:srcCompat="@drawable/ic_reply_all"
+            app:tint="?attr/colorOnSurfaceVariant"
+            />
+
+        <ImageView
+            android:tag="civion_action_forward"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/controlBackground"
+            android:clickable="true"
+            android:contentDescription="@string/forward_action"
+            android:focusable="true"
+            android:padding="12dp"
+            app:srcCompat="@drawable/ic_forward"
+            app:tint="?attr/colorOnSurfaceVariant"
+            />
+
+        <ImageView
+            android:tag="civion_action_attachments"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/controlBackground"
+            android:clickable="true"
+            android:contentDescription="@string/civion_message_view_attachments"
+            android:focusable="true"
+            android:padding="12dp"
+            app:srcCompat="@drawable/ic_attachment"
+            app:tint="?attr/colorOnSurfaceVariant"
+            />
+
+        <ImageView
+            android:id="@+id/menu_overflow"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/controlBackground"
+            android:clickable="true"
+            android:contentDescription="@string/abc_action_menu_overflow_description"
+            android:focusable="true"
+            android:padding="12dp"
+            app:srcCompat="@drawable/ic_more_vert"
+            app:tint="?attr/colorOnSurfaceVariant"
+            />
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/colorOutlineVariant"
+        />
+
+    <!-- The attachment summary the header class shows when there are attachments; the files
+         themselves are the cards below the body. -->
+    <LinearLayout
+        android:id="@+id/attachment_summary_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="4dp"
+        android:visibility="gone"
+        tools:visibility="visible"
+        >
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:contentDescription="@null"
+            app:srcCompat="@drawable/ic_attachment"
+            app:tint="@color/civion_text3"
+            />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/attachment_summary_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:ellipsize="middle"
+            android:singleLine="true"
+            android:textColor="@color/civion_text3"
+            android:textSize="13sp"
+            tools:text="1 attachment (214 kB)"
+            />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/view_all_attachments"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:textColor="?attr/colorPrimary"
+            android:textSize="13sp"
+            android:fontFamily="sans-serif-medium"
+            tools:text="View all"
+            />
+
+    </LinearLayout>
+
+</com.fsck.k9.view.MessageHeader>

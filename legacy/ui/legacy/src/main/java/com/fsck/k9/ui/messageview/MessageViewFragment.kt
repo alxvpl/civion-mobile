@@ -234,8 +234,26 @@ class MessageViewFragment :
         messageTopView = view.findViewById(R.id.message_view)
 
         initializeMessageTopView(messageTopView)
+        wireCivionMessageActions(view)
 
         return view
+    }
+
+    /**
+     * Connects the actions CIVION Mail's message header carries beside the header's own two.
+     *
+     * CIVION Mail overrides the header layout to put reply all, forward and the attachments on a
+     * bar under the sender, beside the header's reply and overflow. Those three are located by tag
+     * rather than by id, because ids generated in the application module are not visible from
+     * here, and looked up rather than required, so the layouts that do not have them - K-9's and
+     * Thunderbird's - are unaffected.
+     */
+    private fun wireCivionMessageActions(view: View) {
+        view.findViewWithTag<View>("civion_action_reply_all")?.setOnClickListener { onReplyAll() }
+        view.findViewWithTag<View>("civion_action_forward")?.setOnClickListener { onForward() }
+        view.findViewWithTag<View>("civion_action_attachments")?.setOnClickListener {
+            showAttachmentListBottomSheet()
+        }
     }
 
     private fun initializeMessageTopView(messageTopView: MessageTopView) {

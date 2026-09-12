@@ -75,8 +75,10 @@ internal val civionLightColorScheme = ThemeColorScheme(
     // Neutral, so the accent stays rare: mid grey and the very light grey of the accepted scale.
     secondary = Color(color = 0xFF616161),
     onSecondary = Color(color = 0xFFFFFFFF),
-    secondaryContainer = Color(color = 0xFFE0E0E0),
-    onSecondaryContainer = Color(color = 0xFF171717),
+    // secondaryContainer carries chips, recipient pills and attachment icon boxes; the mockup of
+    // 2026-09-12 derives it in the accent hue (open point 2, awaiting confirmation).
+    secondaryContainer = Color(color = 0xFFE4DEF7),
+    onSecondaryContainer = Color(color = 0xFF3B3060),
 
     tertiary = Color(color = 0xFF2F4858),
     onTertiary = Color(color = 0xFFFFFFFF),
@@ -141,8 +143,8 @@ internal val civionDarkColorScheme = ThemeColorScheme(
 
     secondary = Color(color = 0xFFA6B7BF),
     onSecondary = Color(color = 0xFF212121),
-    secondaryContainer = Color(color = 0xFF424242),
-    onSecondaryContainer = Color(color = 0xFFFFFFFF),
+    secondaryContainer = Color(color = 0xFF453C63),
+    onSecondaryContainer = Color(color = 0xFFDCD5EF),
 
     tertiary = Color(color = 0xFFA8CCE3),
     onTertiary = Color(color = 0xFF0C3243),

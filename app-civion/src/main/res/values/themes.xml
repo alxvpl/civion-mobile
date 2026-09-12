@@ -23,8 +23,10 @@
              the cyan #E6FBFF of the reference sat 1.08:1 from a read row (2026-09-12). -->
         <item name="colorSecondary">#616161</item>
         <item name="colorOnSecondary">#FFFFFF</item>
-        <item name="colorSecondaryContainer">#E0E0E0</item>
-        <item name="colorOnSecondaryContainer">#171717</item>
+        <!-- secondaryContainer: chips, recipient pills, attachment icon boxes. The mockup of
+             2026-09-12 derives it in the accent hue (open point 2, awaiting confirmation). -->
+        <item name="colorSecondaryContainer">#E4DEF7</item>
+        <item name="colorOnSecondaryContainer">#3B3060</item>
         <item name="colorSurfaceDim">#E0E0E0</item>
         <item name="colorSurface">#FFFFFF</item>
         <item name="colorSurfaceBright">#FFFFFF</item>
@@ -106,8 +108,8 @@
              reads as a mark, not a hole; the cyan #193034 sat 1.08:1 from a read row (2026-09-12). -->
         <item name="colorSecondary">#A6B7BF</item>
         <item name="colorOnSecondary">#212121</item>
-        <item name="colorSecondaryContainer">#424242</item>
-        <item name="colorOnSecondaryContainer">#FFFFFF</item>
+        <item name="colorSecondaryContainer">#453C63</item>
+        <item name="colorOnSecondaryContainer">#DCD5EF</item>
         <item name="colorSurfaceDim">#151515</item>
         <item name="colorSurface">#212121</item>
         <item name="colorSurfaceBright">#323232</item>

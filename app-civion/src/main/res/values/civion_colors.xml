@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="civion_launcher_background">#0f5c6b</color>
+
+    <!-- The canon's third text tone - times, sizes, secondary lines - which the Material roles
+         do not name: #616161 on the light window, #BDBDBD on the dark one (values-night). -->
+    <color name="civion_text3">#616161</color>
 </resources>

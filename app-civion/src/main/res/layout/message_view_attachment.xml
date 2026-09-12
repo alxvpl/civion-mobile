@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CIVION Mail override of an attachment in the message view (civion-mail-mockup screen 04).
+
+  A resource of this name in the application module wins over the one in legacy/ui/legacy; the
+  ids the AttachmentView class looks up are all still here. The card is the mockup's: a hairline
+  border on an 8dp radius, no shadow, the file's icon in a 36dp box on the secondary container,
+  the name at 14sp medium with its size under it at 12sp, and the download action at the end.
+-->
+<com.fsck.k9.ui.messageview.AttachmentView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/AttachmentView"
+    android:id="@+id/attachment"
+    android:layout_height="wrap_content"
+    android:paddingBottom="0dp"
+    >
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/attachment_card"
+        style="@style/AttachmentCard"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="2dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="12dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="?attr/colorSurface"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="0dp"
+        app:strokeColor="?attr/colorOutlineVariant"
+        app:strokeWidth="1dp"
+        >
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="12dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="4dp"
+            android:paddingBottom="10dp"
+            >
+
+            <ImageView
+                android:id="@+id/attachment_preview"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginBottom="10dp"
+                android:background="?android:attr/windowBackground"
+                android:contentDescription="@null"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:visibility="visible"
+                />
+
+            <ImageView
+                android:id="@+id/attachment_type"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/civion_attachment_icon_box"
+                android:contentDescription="@null"
+                android:padding="9dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/attachment_preview"
+                app:srcCompat="@drawable/ic_draft"
+                app:tint="?attr/colorOnSecondaryContainer"
+                />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/attachment_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="8dp"
+                android:ellipsize="middle"
+                android:fontFamily="sans-serif-medium"
+                android:singleLine="true"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="14sp"
+                app:layout_constraintBottom_toTopOf="@+id/attachment_size"
+                app:layout_constraintEnd_toStartOf="@+id/save_button"
+                app:layout_constraintStart_toEndOf="@+id/attachment_type"
+                app:layout_constraintTop_toBottomOf="@+id/attachment_preview"
+                app:layout_constraintVertical_chainStyle="packed"
+                tools:text="Jaarafrekening-2026-03.pdf"
+                />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/attachment_size"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:textColor="@color/civion_text3"
+                android:textSize="12sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="@+id/attachment_name"
+                app:layout_constraintStart_toStartOf="@+id/attachment_name"
+                app:layout_constraintTop_toBottomOf="@+id/attachment_name"
+                tools:text="214 kB"
+                />
+
+            <ImageButton
+                android:id="@+id/save_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/save_attachment_action"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/attachment_preview"
+                app:srcCompat="@drawable/ic_download"
+                app:tint="?attr/colorOnSurfaceVariant"
+                />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+</com.fsck.k9.ui.messageview.AttachmentView>

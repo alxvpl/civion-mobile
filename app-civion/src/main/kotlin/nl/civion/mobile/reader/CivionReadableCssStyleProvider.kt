@@ -58,12 +58,13 @@ internal class CivionReadableCssStyleProvider private constructor(
         |
         |  /* Upstream puts the body at 0.9rem — a tenth below the platform default — on top of
         |     the reader's own text-size setting and the system font scale. Reading is what this
-        |     screen is for, so the default size is restored and the lines given room to breathe.
-        |     A class selector outranks upstream's element selector, so this does not depend on
-        |     the order the stylesheets happen to be injected in. */
+        |     screen is for, so the body is set as the mockup of 2026-09-12 (screen 04) has it:
+        |     15sp on a 1.62 line, still scaled by the reader's text-size setting and the system
+        |     font scale. A class selector outranks upstream's element selector, so this does not
+        |     depend on the order the stylesheets happen to be injected in. */
         |  $content {
-        |    font-size: 1rem;
-        |    line-height: 1.5;
+        |    font-size: 0.9375rem;
+        |    line-height: 1.62;
         |  }
         |</style>
     """.trimMargin()
