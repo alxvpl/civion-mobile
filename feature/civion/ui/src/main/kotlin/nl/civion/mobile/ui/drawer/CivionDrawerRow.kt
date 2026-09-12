@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -51,6 +52,13 @@ internal const val ROW_CORNER_DP = 8
 internal const val INDENT_PER_LEVEL_DP = 16
 private const val DRAGGED_ITEM_ALPHA = 0.9f
 private const val MAX_SHOWN_COUNT = 999
+
+/** Above this the scheme's window is a light surface; below it, a dark one. */
+private const val LIGHT_SURFACE_LUMINANCE = 0.5f
+
+/** The accent as it reads on the selected surface: #5B45B0 on #DCD5EF, #C9BFF2 on #403757. */
+private val AccentOnSelectedLight = Color(color = 0xFF5B45B0)
+private val AccentOnSelectedDark = Color(color = 0xFFC9BFF2)
 
 /**
  * One row of the drawer.
@@ -200,7 +208,26 @@ private fun RowLeading(
  */
 @Composable
 private fun rowContentColour(selected: Boolean): Color =
-    if (selected) BoltTheme.colors.primary else BoltTheme.colors.onSurfaceVariant
+    if (selected) accentOnSelected() else BoltTheme.colors.onSurfaceVariant
+
+/**
+ * The accent as it reads on the selected surface.
+ *
+ * `primary` is the accent on the drawer's own surface, not on a selected row. Over the accepted
+ * selected surfaces it measures 3.80:1 (light) and 3.77:1 (dark), below the 4.5:1 that a drawer
+ * row - 18sp regular, normal text - needs. UI canon r002 §2 therefore gives the accent a separate
+ * foreground value there: #5B45B0 on #DCD5EF is 5.07:1, #C9BFF2 on #403757 is 6.42:1.
+ *
+ * Bolt hands the composition a colour scheme rather than a light/dark flag, so the active theme is
+ * read off the scheme's own window surface.
+ */
+@Composable
+private fun accentOnSelected(): Color =
+    if (BoltTheme.colors.surface.luminance() < LIGHT_SURFACE_LUMINANCE) {
+        AccentOnSelectedDark
+    } else {
+        AccentOnSelectedLight
+    }
 
 /**
  * The drawer's primary row text: 18sp on a 24sp line, in the body face.

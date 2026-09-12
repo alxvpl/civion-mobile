@@ -84,10 +84,13 @@
     </style>
 
     <style name="Theme.Civion.Dark" parent="Theme2.Thunderbird.Dark">
-        <!-- CIVION accent: Deep Violet is the active colour on dark too (colour-system pass of
-             2026-09-12); the light tint stays the inverse role. -->
-        <item name="colorPrimary">#6E56CF</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
+        <!-- CIVION accent: Deep Violet has one identity and two rendered values (UI canon r002).
+             #6E56CF measures 2.99:1 on this window and cannot carry text or an icon here, so dark
+             renders the accent as #9B87F5 (5.50:1). onPrimary follows it down: white on #9B87F5 is
+             2.93:1, the window graphite is 5.50:1. #6E56CF stays the inverse role and the product's
+             identity colour. -->
+        <item name="colorPrimary">#9B87F5</item>
+        <item name="colorOnPrimary">#212121</item>
         <item name="colorPrimaryContainer">#5A45B2</item>
         <item name="colorOnPrimaryContainer">#E7DFFF</item>
         <item name="colorPrimaryInverse">#6E56CF</item>

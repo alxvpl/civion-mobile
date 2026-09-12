@@ -130,9 +130,12 @@ internal val civionLightColorScheme = ThemeColorScheme(
 )
 
 internal val civionDarkColorScheme = ThemeColorScheme(
-    // Deep Violet is the active colour on dark as well; the light tint stays the inverse role.
-    primary = Color(color = 0xFF6E56CF),
-    onPrimary = Color(color = 0xFFFFFFFF),
+    // Deep Violet has one identity and two rendered values (UI canon r002): #6E56CF measures
+    // 2.99:1 on the #212121 window and cannot carry text or an icon there, so dark renders the
+    // accent as #9B87F5 (5.50:1). onPrimary follows it down — white on #9B87F5 is 2.93:1, the
+    // window graphite is 5.50:1. #6E56CF stays the inverse role and the product's identity colour.
+    primary = Color(color = 0xFF9B87F5),
+    onPrimary = Color(color = 0xFF212121),
     primaryContainer = Color(color = 0xFF5A45B2),
     onPrimaryContainer = Color(color = 0xFFE7DFFF),
 
