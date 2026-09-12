@@ -30,9 +30,10 @@ import nl.civion.mobile.brand.resources.android_mail_logo
  *    action, CIVION's own actions. Secondary and tertiary roles are neutral, so the interface does
  *    not turn violet. `error` is a distinct orange-red, so an error never reads as an accent.
  *  - **The neutrals are the accepted CIVION surface system** (colour-system pass of 2026-09-12):
- *    a white light hierarchy and a layered dark ladder, with #E6FBFF / #193034 as the selected
- *    surface in the highest container role. The classic theme in values/themes.xml names the
- *    same values, so both UI layers sit on one grey system.
+ *    a white light hierarchy and a layered dark ladder, with #DCD5EF / #403757 as the selected
+ *    surface in the highest container role (violet-tinted, so a selected row is a visible mark;
+ *    the cyan #E6FBFF / #193034 taken from the reference sat 1.08:1 from a read row). The classic
+ *    theme in values/themes.xml names the same values, so both UI layers sit on one grey system.
  */
 @Composable
 fun CivionBoltTheme(
@@ -89,8 +90,8 @@ internal val civionLightColorScheme = ThemeColorScheme(
     onErrorContainer = Color(color = 0xFF8A3200),
 
     // The accepted light surface system: window white, list #F1F1F1, group header #F0F0F0, read
-    // row #EEEEEE, selected #E6FBFF (the highest container is the selected surface, as in the
-    // classic theme), text #171717 over #464646.
+    // row #EEEEEE, selected #DCD5EF (the highest container is the selected surface, as in the
+    // classic theme; Bolt derives surfaceVariant from it), text #171717 over #464646.
     surfaceDim = Color(color = 0xFFE0E0E0),
     surface = Color(color = 0xFFFFFFFF),
     surfaceBright = Color(color = 0xFFFFFFFF),
@@ -101,7 +102,7 @@ internal val civionLightColorScheme = ThemeColorScheme(
     surfaceContainerLow = Color(color = 0xFFF1F1F1),
     surfaceContainer = Color(color = 0xFFF0F0F0),
     surfaceContainerHigh = Color(color = 0xFFEEEEEE),
-    surfaceContainerHighest = Color(color = 0xFFE6FBFF),
+    surfaceContainerHighest = Color(color = 0xFFDCD5EF),
 
     inverseSurface = Color(color = 0xFF212121),
     inverseOnSurface = Color(color = 0xFFE0E0E0),
@@ -151,7 +152,7 @@ internal val civionDarkColorScheme = ThemeColorScheme(
     onErrorContainer = Color(color = 0xFFFFDBCC),
 
     // The accepted dark ladder: #080808 / #101010 / #181818 under the #212121 window, message
-    // row #323232, selected #193034; text #FFFFFF over #E0E0E0 over #BDBDBD.
+    // row #323232, selected #403757; text #FFFFFF over #E0E0E0 over #BDBDBD.
     surfaceDim = Color(color = 0xFF151515),
     surface = Color(color = 0xFF212121),
     surfaceBright = Color(color = 0xFF323232),
@@ -162,7 +163,7 @@ internal val civionDarkColorScheme = ThemeColorScheme(
     surfaceContainerLow = Color(color = 0xFF101010),
     surfaceContainer = Color(color = 0xFF181818),
     surfaceContainerHigh = Color(color = 0xFF323232),
-    surfaceContainerHighest = Color(color = 0xFF193034),
+    surfaceContainerHighest = Color(color = 0xFF403757),
 
     inverseSurface = Color(color = 0xFFE0E0E0),
     inverseOnSurface = Color(color = 0xFF212121),

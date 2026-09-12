@@ -18,7 +18,9 @@
         <!-- CIVION neutrals: the accepted light surface system (UI decisions 2026-09-10; values as
              documented in the colour-system pass of 2026-09-12), the same as civionLightColorScheme
              in CivionBoltTheme.kt. Window white; list #F1F1F1; group header #F0F0F0; read row
-             #EEEEEE; selected #E6FBFF; text #171717 / #464646; disabled-grade grey #E0E0E0. -->
+             #EEEEEE; selected #DCD5EF; text #171717 / #464646; disabled-grade grey #E0E0E0. The selected
+             surface is violet-tinted so a selected row reads as a mark beside #EEEEEE and #FFFFFF;
+             the cyan #E6FBFF of the reference sat 1.08:1 from a read row (2026-09-12). -->
         <item name="colorSecondary">#616161</item>
         <item name="colorOnSecondary">#FFFFFF</item>
         <item name="colorSecondaryContainer">#E0E0E0</item>
@@ -32,8 +34,8 @@
         <item name="colorSurfaceContainerLow">#F1F1F1</item>
         <item name="colorSurfaceContainer">#F0F0F0</item>
         <item name="colorSurfaceContainerHigh">#EEEEEE</item>
-        <item name="colorSurfaceContainerHighest">#E6FBFF</item>
-        <item name="colorSurfaceVariant">#E6FBFF</item>
+        <item name="colorSurfaceContainerHighest">#DCD5EF</item>
+        <item name="colorSurfaceVariant">#DCD5EF</item>
         <item name="colorSurfaceInverse">#212121</item>
         <item name="colorOnSurfaceInverse">#E0E0E0</item>
         <!-- The list reads its preview and read-row text through colorOutline: #464646 is the
@@ -96,8 +98,9 @@
 
         <!-- CIVION neutrals: the accepted dark surface ladder (colour-system pass of 2026-09-12), the
              same as civionDarkColorScheme in CivionBoltTheme.kt. Window #212121 over the layers
-             #080808 / #101010 / #181818; message row #323232; selected #193034; text #FFFFFF /
-             #E0E0E0 / #BDBDBD. -->
+             #080808 / #101010 / #181818; message row #323232; selected #403757; text #FFFFFF /
+             #E0E0E0 / #BDBDBD. The selected surface is violet-tinted and lighter than the row, so it
+             reads as a mark, not a hole; the cyan #193034 sat 1.08:1 from a read row (2026-09-12). -->
         <item name="colorSecondary">#A6B7BF</item>
         <item name="colorOnSecondary">#212121</item>
         <item name="colorSecondaryContainer">#424242</item>
@@ -111,8 +114,8 @@
         <item name="colorSurfaceContainerLow">#101010</item>
         <item name="colorSurfaceContainer">#181818</item>
         <item name="colorSurfaceContainerHigh">#323232</item>
-        <item name="colorSurfaceContainerHighest">#193034</item>
-        <item name="colorSurfaceVariant">#193034</item>
+        <item name="colorSurfaceContainerHighest">#403757</item>
+        <item name="colorSurfaceVariant">#403757</item>
         <item name="colorSurfaceInverse">#E0E0E0</item>
         <item name="colorOnSurfaceInverse">#212121</item>
         <!-- Preview and read-row text come through colorOutline: #BDBDBD is the documented meta colour. -->

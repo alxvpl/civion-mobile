@@ -20,11 +20,12 @@
       block runs from the picture to the trailing column on every line, so no text sits under
       the metadata.
 
-    - The trailing column: the paperclip, as a small chip in the row's corner when there is one,
-      then the star, then the date. A barrier on the column's start is what the
-      text ends at, so the column's width - the date's, never less than 52dp - is the only
-      thing that decides where the text stops; a long subject cannot push the date, and a
-      paperclip cannot move the star. The star's tap area is 48dp around it.
+    - The trailing column: the paperclip, as a 20dp chip in the row's corner when there is one
+      (a 14dp glyph, so it reads as a mark and not as a speck), then the star at the same 20dp,
+      then the date. A barrier on the column's start is what the text ends at, so the column's
+      width - the date's, never less than 52dp - is the only thing that decides where the text
+      stops; a long subject cannot push the date, and a paperclip cannot move the star. The star's tap
+      area is 48dp around it.
 
     - `account_color_chip` and `status` are aligned to `subject`, so the chip and the
       reply/forward marker stay on the subject line.
@@ -162,12 +163,12 @@
 
     <ImageView
         android:id="@+id/attachment"
-        android:layout_width="24dp"
-        android:layout_height="14dp"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         android:layout_marginTop="2dp"
         android:layout_marginEnd="@dimen/messageListHorizontalPadding"
         android:background="@drawable/message_list_attachment_chip"
-        android:padding="2dp"
+        android:padding="3dp"
         android:scaleType="fitCenter"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -192,8 +193,8 @@
 
     <ImageView
         android:id="@+id/star"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         android:layout_marginEnd="@dimen/messageListHorizontalPadding"
         android:layout_marginTop="2dp"
         android:src="@drawable/btn_select_star"
