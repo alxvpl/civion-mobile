@@ -1,32 +1,3 @@
-# CIVION Mail — Project Bootstrap
-
-## Mandatory CIVION pre-work
-
-This repository does not contain the authoritative CIVION project governance.
-
-Before any discussion, planning, implementation, review or acceptance involving this repository, read from Google Drive:
-
-1. `CIVION_PROJECT_WORK_INSTRUCTIONS.md` — Drive ID `1hE4shJrkbFSauoeKHbNC9sbTA0Pv4h0m`
-2. `00_CIVION_CANON_INDEX.md` — Drive ID `1Dxdb6Yhww965bDSDYZNzi3JsCDdc1t1D`
-
-Then read the current applicable subproject/domain Canon indexes named below and every active object relevant to the task.
-
-Repository files are implementation authority or bootstrap pointers only. They are not competing product Canon. If Drive authority is inaccessible, conflicting, WORKING/OPEN at the required point, or missing, stop the affected scope instead of relying on memory, a handoff or a stale local copy.
-
-Before shared work, follow the Notion `CIVION Execution Claims` protocol. Before code changes, inspect the current repository/ref/state and overlapping work. Use a bounded branch, run the relevant checks, report exact evidence and do not claim completion without verification.
-
-## Applicable CIVION authority
-
-- CIVION Mail Canon Index r004 — Drive ID `1PZ77ubFPrkurxKb7XBlAtEjSCnLOQcln`
-- Mail Domain Canon Index r002 — Drive ID `19jmH5LbD_YGFeKeVfHvOFmxfvyVnS7T4`
-- CIVION Organizational Subproject Registry r001 — Drive ID `1NKB4IGCqnpftmXApKX4YlzABTjslbTNj`
-
-The current product identity is **CIVION Mail**. Historical repository/module identifiers may remain for compatibility. Mail-domain semantics remain owned by the Mail domain; the Android application is a surface/implementation and may not create a competing Core or Mail master.
-
-The upstream Thunderbird engineering rules below remain mandatory repository-local constraints. Where an upstream rule and accepted CIVION product behavior appear to conflict, stop and surface the conflict; do not silently choose either side.
-
----
-
 # AI Agent Guide for Thunderbird for Android
 
 This file defines requirements for AI coding agents and automated systems contributing to this repository.
